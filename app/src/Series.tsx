@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './Movies.css';
+import PosterCard from './PosterCard';
 
 /* ─── Types ─── */
 interface SeriesItem {
@@ -59,7 +59,6 @@ async function gqlFetch<T>(query: string): Promise<T> {
 
 /* ─── Component ─── */
 export default function Series() {
-  const navigate = useNavigate();
   const [series, setSeries] = useState<SeriesItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -242,29 +241,15 @@ export default function Series() {
         <>
           <div className="movies-grid">
             {filtered.map(show => (
-              <div
-                className="poster-card"
+              <PosterCard
                 key={show.uuid}
-                onClick={() => navigate(`/series/${show.uuid}`)}
-              >
-                <div className="poster">
-                  {show.posterPath && (
-                    <img
-                      src={tmdbImg(show.posterPath)}
-                      alt={show.name}
-                      loading="lazy"
-                      onLoad={e => e.currentTarget.classList.add('loaded')}
-                    />
-                  )}
-                  <div className="overlay">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="p-title">{show.name}</div>
-                <div className="p-year">{show.firstAirDate?.substring(0, 4)}</div>
-              </div>
+                posterUrl={tmdbImg(show.posterPath)}
+                title={show.name}
+                subtitle={show.firstAirDate?.substring(0, 4)}
+                detailPath={`/series/${show.uuid}`}
+                mediaType="series"
+                mediaUuid={show.uuid}
+              />
             ))}
           </div>
           {/* Infinite scroll sentinel */}

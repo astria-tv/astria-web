@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import PosterCard from './PosterCard';
 
 /* ─── Types ─── */
 interface Movie {
@@ -218,36 +219,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   const isMovie = item.__typename === 'Movie';
                   const m = item as Movie;
                   const s = item as unknown as Series;
+                  const clearSearch = () => { setSearchQuery(''); setSearchResults(null); };
                   return (
-                    <div
-                      className="search-card"
+                    <PosterCard
                       key={isMovie ? m.uuid : s.uuid}
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSearchResults(null);
-                        if (isMovie) {
-                          navigate(`/movie/${m.uuid}`);
-                        } else {
-                          navigate(`/series/${s.uuid}`);
-                        }
-                      }}
-                    >
-                      <div className="search-card-poster">
-                        {isMovie && m.posterURL ? (
-                          <img src={m.posterURL} alt={m.title} onLoad={e => e.currentTarget.classList.add('loaded')} />
-                        ) : !isMovie && s.posterPath ? (
-                          <img src={tmdbImg(s.posterPath, 'w300')} alt={s.name} onLoad={e => e.currentTarget.classList.add('loaded')} />
-                        ) : null}
-                        <div className="search-card-overlay">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        </div>
-                        <span className="search-card-type">{isMovie ? 'Movie' : 'Series'}</span>
-                      </div>
-                      <div className="search-card-info">
-                        <div className="search-card-title">{isMovie ? m.title : s.name}</div>
-                        <div className="search-card-year">{isMovie ? m.year : s.firstAirDate?.substring(0, 4)}</div>
-                      </div>
-                    </div>
+                      posterUrl={isMovie ? m.posterURL : tmdbImg(s.posterPath, 'w300')}
+                      title={isMovie ? m.title : s.name}
+                      subtitle={isMovie ? m.year : s.firstAirDate?.substring(0, 4)}
+                      badge={isMovie ? 'Movie' : 'Series'}
+                      detailPath={isMovie ? `/movie/${m.uuid}` : `/series/${s.uuid}`}
+                      mediaType={isMovie ? 'movie' : 'series'}
+                      mediaUuid={isMovie ? m.uuid : s.uuid}
+                      onNavigate={clearSearch}
+                    />
                   );
                 })}
               </div>

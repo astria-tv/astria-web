@@ -1,6 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import PosterCard from './PosterCard';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -8,8 +10,18 @@ interface PlayState {
   playtime: number;
 }
 
+interface StreamInfo {
+  codecName: string | null;
+  bitRate: number | null;
+  streamType: string | null;
+  resolution: string | null;
+}
+
 interface MovieFile {
+  uuid: string;
   totalDuration: number | null;
+  fileSize: string;
+  streams: StreamInfo[];
 }
 
 interface Movie {
@@ -33,7 +45,10 @@ interface Season {
 }
 
 interface EpisodeFile {
+  uuid: string;
   totalDuration: number | null;
+  fileSize: string;
+  streams: StreamInfo[];
 }
 
 interface Episode {
@@ -79,7 +94,7 @@ const DASHBOARD_QUERY = `{
     backdropPath
     uuid
     playState { finished playtime }
-    files { totalDuration }
+    files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
   }
   series(limit: 20, sort: name) {
     name
@@ -98,6 +113,7 @@ const DASHBOARD_QUERY = `{
       posterURL(width: 300)
       uuid
       playState { finished playtime }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
     ... on Episode {
       name
@@ -106,6 +122,7 @@ const DASHBOARD_QUERY = `{
       uuid
       playState { finished playtime }
       season { seasonNumber posterPath series { name uuid posterPath } }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
   }
   upNext {
@@ -118,7 +135,7 @@ const DASHBOARD_QUERY = `{
       backdropPath
       uuid
       playState { finished playtime }
-      files { totalDuration }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
     ... on Episode {
       name
@@ -127,7 +144,7 @@ const DASHBOARD_QUERY = `{
       uuid
       playState { finished playtime }
       season { seasonNumber series { name uuid } }
-      files { totalDuration }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
   }
   mediaStats {
@@ -139,8 +156,72 @@ const DASHBOARD_QUERY = `{
 }`;
 
 
+const SERIES_FIRST_EPISODE_QUERY = `query SeriesFirstEp($uuid: String!) {
+  series(uuid: $uuid) {
+    name
+    seasons {
+      seasonNumber
+      name
+      episodes {
+        name
+        episodeNumber
+        uuid
+        playState { finished playtime }
+        files {
+          uuid
+          totalDuration
+          fileSize
+          streams { codecName bitRate streamType resolution }
+        }
+      }
+    }
+  }
+}`;
 
 /* ─── Helpers ─── */
+interface FilePickerOption {
+  uuid: string;
+  resolution: string;
+  codec: string;
+  bitrate: string;
+  size: string;
+}
+
+interface FilePickerState {
+  title: string;
+  subtitle: string;
+  mediaUuid: string;
+  startTime: number;
+  options: FilePickerOption[];
+}
+
+function formatFileSize(bytesStr: string): string {
+  const bytes = parseInt(bytesStr, 10);
+  if (isNaN(bytes) || bytes === 0) return '—';
+  const gb = bytes / (1024 * 1024 * 1024);
+  if (gb >= 1) return `${gb.toFixed(1)} GB`;
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(0)} MB`;
+}
+
+function buildFileOptions(files: { uuid: string; fileSize: string; streams: StreamInfo[] }[]): FilePickerOption[] {
+  return [...files]
+    .sort((a, b) => {
+      const resA = parseInt(a.streams?.find(s => s.streamType === 'video')?.resolution ?? '') || 0;
+      const resB = parseInt(b.streams?.find(s => s.streamType === 'video')?.resolution ?? '') || 0;
+      return resB - resA;
+    })
+    .map(f => {
+      const vs = f.streams?.find(s => s.streamType === 'video');
+      return {
+        uuid: f.uuid,
+        resolution: vs?.resolution ?? 'Unknown',
+        codec: vs?.codecName?.toUpperCase() ?? '',
+        bitrate: vs?.bitRate ? `${Math.round(vs.bitRate / 1000)}k` : '',
+        size: formatFileSize(f.fileSize),
+      };
+    });
+}
 function tmdbImg(path: string, size = 'w500'): string {
   if (!path) return '';
   if (path.startsWith('http')) return path;
@@ -218,6 +299,9 @@ export default function Dashboard() {
   const [stats, setStats] = useState<MediaStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [heroItem, setHeroItem] = useState<Movie | Series | null>(null);
+  const [filePicker, setFilePicker] = useState<FilePickerState | null>(null);
+  const [heroLoading, setHeroLoading] = useState(false);
+  const filePickerRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = (() => {
     const jwt = sessionStorage.getItem('jwt');
@@ -268,7 +352,142 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Close file picker on outside click
+  useEffect(() => {
+    if (!filePicker) return;
+    function handleClick(e: MouseEvent) {
+      if (filePickerRef.current && !filePickerRef.current.contains(e.target as Node)) {
+        setFilePicker(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filePicker]);
 
+  function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number) {
+    navigate(`/play/${fileUuid}`, {
+      state: { title, subtitle, mediaUuid, startTime },
+    });
+  }
+
+  function handleEpisodePlay(episode: Episode) {
+    if (!episode.files || episode.files.length === 0) return;
+    const startTime = episode.playState?.finished ? 0 : (episode.playState?.playtime ?? 0);
+    const seriesName = episode.season?.series?.name ?? '';
+    const s = episode.season?.seasonNumber ?? 0;
+    const e = episode.episodeNumber;
+    const subtitle = `${seriesName} · S${s} E${e}`;
+
+    if (episode.files.length === 1) {
+      playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime);
+    } else {
+      setFilePicker({
+        title: episode.name,
+        subtitle,
+        mediaUuid: episode.uuid,
+        startTime,
+        options: buildFileOptions(episode.files),
+      });
+    }
+  }
+
+  function handleMediaItemPlay(item: MediaItem, ev: React.MouseEvent) {
+    ev.stopPropagation();
+    if (item.__typename === 'Movie') {
+      handleMoviePlay(item as Movie);
+    } else if (item.__typename === 'Episode') {
+      handleEpisodePlay(item as Episode);
+    }
+  }
+
+  function handleMoviePlay(movie: Movie) {
+    if (!movie.files || movie.files.length === 0) return;
+    const startTime = movie.playState?.finished ? 0 : (movie.playState?.playtime ?? 0);
+    const duration = movie.files[0]?.totalDuration;
+    const subtitle = [movie.year, duration ? formatDuration(duration) : null].filter(Boolean).join(' · ');
+
+    if (movie.files.length === 1) {
+      playFile(movie.files[0].uuid, movie.title, subtitle, movie.uuid, startTime);
+    } else {
+      setFilePicker({
+        title: movie.title,
+        subtitle,
+        mediaUuid: movie.uuid,
+        startTime,
+        options: buildFileOptions(movie.files),
+      });
+    }
+  }
+
+  async function handleSeriesPlay(s: Series) {
+    setHeroLoading(true);
+    try {
+      const data = await gqlFetch<{
+        series: Array<{
+          name: string;
+          seasons: Array<{
+            seasonNumber: number;
+            name: string;
+            episodes: Array<{
+              name: string;
+              episodeNumber: number;
+              uuid: string;
+              playState: PlayState | null;
+              files: Array<{ uuid: string; totalDuration: number | null; fileSize: string; streams: StreamInfo[] }>;
+            }>;
+          }>;
+        }>;
+      }>(SERIES_FIRST_EPISODE_QUERY, { uuid: s.uuid });
+
+      const seriesData = data.series[0];
+      if (!seriesData) return;
+
+      // Find the first season (sorted) with episodes that have files
+      const sortedSeasons = [...seriesData.seasons].sort((a, b) => a.seasonNumber - b.seasonNumber);
+      let targetEp: typeof sortedSeasons[0]['episodes'][0] | null = null;
+      let targetSeason: typeof sortedSeasons[0] | null = null;
+
+      for (const season of sortedSeasons) {
+        const sortedEps = [...season.episodes].sort((a, b) => a.episodeNumber - b.episodeNumber);
+        const ep = sortedEps.find(e => e.files.length > 0);
+        if (ep) {
+          targetEp = ep;
+          targetSeason = season;
+          break;
+        }
+      }
+
+      if (!targetEp || !targetSeason) return;
+
+      const startTime = targetEp.playState?.finished ? 0 : (targetEp.playState?.playtime ?? 0);
+      const subtitle = `${seriesData.name} · ${targetSeason.name} · E${targetEp.episodeNumber}`;
+
+      if (targetEp.files.length === 1) {
+        playFile(targetEp.files[0].uuid, targetEp.name, subtitle, targetEp.uuid, startTime);
+      } else {
+        setFilePicker({
+          title: targetEp.name,
+          subtitle,
+          mediaUuid: targetEp.uuid,
+          startTime,
+          options: buildFileOptions(targetEp.files),
+        });
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setHeroLoading(false);
+    }
+  }
+
+  function handleHeroPlay() {
+    if (!heroItem) return;
+    if (heroItem.__typename === 'Movie') {
+      handleMoviePlay(heroItem as Movie);
+    } else {
+      handleSeriesPlay(heroItem as Series);
+    }
+  }
 
   if (loading) {
     return (
@@ -448,9 +667,9 @@ export default function Dashboard() {
                 </div>
                 <p className="hero-desc">{overview}</p>
                 <div className="hero-actions">
-                  <button className="btn btn-play">
+                  <button className="btn btn-play" onClick={handleHeroPlay} disabled={heroLoading}>
                     <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    Play
+                    {heroLoading ? 'Loading…' : 'Play'}
                   </button>
                   <button className="btn btn-ghost" onClick={() => navigate(detailPath)}>More Info</button>
                 </div>
@@ -485,7 +704,7 @@ export default function Dashboard() {
                         {item.__typename === 'Episode' && (item as Episode).stillPath && (
                           <img src={tmdbImg((item as Episode).stillPath)} alt="" className="cw-thumb-img" onLoad={e => e.currentTarget.classList.add('loaded')} />
                         )}
-                        <div className="play-overlay">
+                        <div className="play-overlay" onClick={ev => handleMediaItemPlay(item, ev)}>
                           <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </div>
                         <div className="cw-progress">
@@ -547,36 +766,18 @@ export default function Dashboard() {
                     const movie = item as Movie;
                     const episode = item as Episode;
                     return (
-                      <div className="poster-card" key={item.uuid} onClick={() => {
-                        if (isMovie) {
-                          navigate(`/movie/${movie.uuid}`);
-                        } else {
-                          const seriesUuid = episode.season?.series?.uuid;
-                          if (seriesUuid) {
-                            navigate(`/series/${seriesUuid}?season=${episode.season?.seasonNumber ?? 1}`);
-                          }
-                        }
-                      }} style={{ cursor: 'pointer' }}>
-                        <div className="poster">
-                          {isMovie && movie.posterURL ? (
-                            <img src={movie.posterURL} alt={movie.title} onLoad={e => e.currentTarget.classList.add('loaded')} />
-                          ) : !isMovie ? (
-                            <img src={tmdbImg((episode.season?.posterPath || episode.season?.series?.posterPath) ?? '', 'w300')} alt={episode.name} onLoad={e => e.currentTarget.classList.add('loaded')} />
-                          ) : null}
-                          <span className="badge-new">New</span>
-                          <div className="overlay">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                          </div>
-                        </div>
-                        <div className="p-title">
-                          {isMovie ? movie.title : `${episode.season?.series?.name ?? ''}`}
-                        </div>
-                        <div className="p-year">
-                          {isMovie
-                            ? movie.year
-                            : `S${episode.season?.seasonNumber ?? '?'} E${episode.episodeNumber}`}
-                        </div>
-                      </div>
+                      <PosterCard
+                        key={item.uuid}
+                        posterUrl={isMovie ? movie.posterURL : tmdbImg((episode.season?.posterPath || episode.season?.series?.posterPath) ?? '', 'w300')}
+                        title={isMovie ? movie.title : (episode.season?.series?.name ?? '')}
+                        subtitle={isMovie ? movie.year : `S${episode.season?.seasonNumber ?? '?'} E${episode.episodeNumber}`}
+                        badge="New"
+                        detailPath={isMovie ? `/movie/${movie.uuid}` : `/series/${episode.season?.series?.uuid}?season=${episode.season?.seasonNumber ?? 1}`}
+                        mediaType={isMovie ? 'movie' : 'movie'}
+                        files={item.files}
+                        playState={item.playState}
+                        mediaUuid={item.uuid}
+                      />
                     );
                   })}
                 </div>
@@ -592,16 +793,17 @@ export default function Dashboard() {
                 </div>
                 <div className="media-row">
                   {movies.map(movie => (
-                    <div className="poster-card" key={movie.uuid} onClick={() => navigate(`/movie/${movie.uuid}`)} style={{ cursor: 'pointer' }}>
-                      <div className="poster">
-                        {movie.posterURL && <img src={movie.posterURL} alt={movie.title} onLoad={e => e.currentTarget.classList.add('loaded')} />}
-                        <div className="overlay">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        </div>
-                      </div>
-                      <div className="p-title">{movie.title}</div>
-                      <div className="p-year">{movie.year}</div>
-                    </div>
+                    <PosterCard
+                      key={movie.uuid}
+                      posterUrl={movie.posterURL}
+                      title={movie.title}
+                      subtitle={movie.year}
+                      detailPath={`/movie/${movie.uuid}`}
+                      mediaType="movie"
+                      files={movie.files}
+                      playState={movie.playState}
+                      mediaUuid={movie.uuid}
+                    />
                   ))}
                 </div>
               </section>
@@ -616,23 +818,55 @@ export default function Dashboard() {
                 </div>
                 <div className="media-row">
                   {series.map(s => (
-                    <div className="poster-card" key={s.uuid} onClick={() => navigate(`/series/${s.uuid}`)} style={{ cursor: 'pointer' }}>
-                      <div className="poster">
-                        {s.posterPath && <img src={tmdbImg(s.posterPath, 'w300')} alt={s.name} onLoad={e => e.currentTarget.classList.add('loaded')} />}
-                        <div className="overlay">
-                          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        </div>
-                        {s.unwatchedEpisodesCount > 0 && (
-                          <span className="badge-new">{s.unwatchedEpisodesCount} new</span>
-                        )}
-                      </div>
-                      <div className="p-title">{s.name}</div>
-                      <div className="p-year">{s.firstAirDate?.substring(0, 4)}</div>
-                    </div>
+                    <PosterCard
+                      key={s.uuid}
+                      posterUrl={tmdbImg(s.posterPath, 'w300')}
+                      title={s.name}
+                      subtitle={s.firstAirDate?.substring(0, 4)}
+                      badge={s.unwatchedEpisodesCount > 0 ? `${s.unwatchedEpisodesCount} new` : undefined}
+                      detailPath={`/series/${s.uuid}`}
+                      mediaType="series"
+                      mediaUuid={s.uuid}
+                    />
                   ))}
                 </div>
               </section>
             )}
+
+      {/* File Picker Modal */}
+      {filePicker && createPortal(
+        <div className="fp-overlay" onClick={() => setFilePicker(null)}>
+          <div
+            className="fp-modal"
+            ref={filePickerRef}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="fp-header">
+              <span className="fp-label">Choose Version</span>
+              <span className="fp-title">{filePicker.subtitle}</span>
+            </div>
+            {filePicker.options.map(opt => (
+              <button
+                key={opt.uuid}
+                className="fp-option"
+                onClick={() => {
+                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime);
+                  setFilePicker(null);
+                }}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span className="fp-res">{opt.resolution}</span>
+                <span className="fp-tags">
+                  {opt.codec && <span className="fp-tag">{opt.codec}</span>}
+                  {opt.bitrate && <span className="fp-tag">{opt.bitrate}</span>}
+                </span>
+                <span className="fp-size">{opt.size}</span>
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   );
 }

@@ -1,13 +1,29 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './Movies.css';
+import PosterCard from './PosterCard';
 
 /* ─── Types ─── */
+interface StreamInfo {
+  codecName: string | null;
+  bitRate: number | null;
+  streamType: string | null;
+  resolution: string | null;
+}
+
+interface MovieFile {
+  uuid: string;
+  totalDuration: number | null;
+  fileSize: string;
+  streams: StreamInfo[];
+}
+
 interface Movie {
   title: string;
   year: string;
   posterURL: string;
   uuid: string;
+  playState: { finished: boolean; playtime: number } | null;
+  files: MovieFile[];
 }
 
 type SortOption = 'title' | 'releaseDate';
@@ -30,6 +46,8 @@ function buildPageQuery(sort: SortOption, sortDirection: SortDir, offset: number
       year
       posterURL(width: 300)
       uuid
+      playState { finished playtime }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
   }`;
 }
@@ -52,7 +70,6 @@ async function gqlFetch<T>(query: string): Promise<T> {
 
 /* ─── Component ─── */
 export default function Movies() {
-  const navigate = useNavigate();
   const [movies, setMovies] = useState<Movie[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -237,29 +254,17 @@ export default function Movies() {
         <>
           <div className="movies-grid">
             {filtered.map(movie => (
-              <div
-                className="poster-card"
+              <PosterCard
                 key={movie.uuid}
-                onClick={() => navigate(`/movie/${movie.uuid}`)}
-              >
-                <div className="poster">
-                  {movie.posterURL && (
-                    <img
-                      src={movie.posterURL}
-                      alt={movie.title}
-                      loading="lazy"
-                      onLoad={e => e.currentTarget.classList.add('loaded')}
-                    />
-                  )}
-                  <div className="overlay">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <polygon points="5 3 19 12 5 21" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="p-title">{movie.title}</div>
-                <div className="p-year">{movie.year}</div>
-              </div>
+                posterUrl={movie.posterURL}
+                title={movie.title}
+                subtitle={movie.year}
+                detailPath={`/movie/${movie.uuid}`}
+                mediaType="movie"
+                files={movie.files}
+                playState={movie.playState}
+                mediaUuid={movie.uuid}
+              />
             ))}
           </div>
           {/* Infinite scroll sentinel */}
