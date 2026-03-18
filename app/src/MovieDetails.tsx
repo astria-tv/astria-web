@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import './MovieDetails.css';
 
@@ -44,11 +45,35 @@ interface Movie {
   playState: PlayState | null;
 }
 
+interface TmdbMovieResult {
+  title: string;
+  releaseYear: number | null;
+  overview: string;
+  tmdbID: number;
+  backdropPath: string;
+  posterPath: string;
+}
+
 /* ─── Mutations ─── */
 const CREATE_PLAY_STATE = `mutation CreatePlayState($uuid: String!, $finished: Boolean!, $playtime: Float!) {
   createPlayState(uuid: $uuid, finished: $finished, playtime: $playtime) {
     uuid
     playState { finished playtime }
+  }
+}`;
+
+const TMDB_SEARCH_MOVIES = `query ($query: String!) {
+  tmdbSearchMovies(query: $query) {
+    title releaseYear overview tmdbID backdropPath posterPath
+  }
+}`;
+
+const UPDATE_MOVIE_FILE = `mutation ($input: UpdateMovieFileMetadataInput!) {
+  updateMovieFileMetadata(input: $input) {
+    error { message hasError }
+    mediaItem {
+      ... on Movie { uuid }
+    }
   }
 }`;
 
@@ -109,6 +134,17 @@ function formatFileSize(bytesStr: string): string {
   return `${mb.toFixed(0)} MB`;
 }
 
+function parseJwt(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
+}
+
 function progressPercent(movie: Movie): number {
   if (!movie.playState || movie.playState.finished) return 0;
   const duration = movie.files?.[0]?.totalDuration ?? 0;
@@ -141,6 +177,28 @@ export default function MovieDetails() {
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
 
+  // Admin check
+  const isAdmin = useMemo(() => {
+    const jwt = sessionStorage.getItem('jwt');
+    if (!jwt) return false;
+    const payload = parseJwt(jwt);
+    return payload?.admin === true;
+  }, []);
+
+  // Dropdown state
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fix match state
+  const [showFixMatch, setShowFixMatch] = useState(false);
+  const [fixSearchQuery, setFixSearchQuery] = useState('');
+  const [fixTmdbIdInput, setFixTmdbIdInput] = useState('');
+  const [fixMovieResults, setFixMovieResults] = useState<TmdbMovieResult[]>([]);
+  const [fixSearching, setFixSearching] = useState(false);
+  const [fixing, setFixing] = useState(false);
+  const [fixError, setFixError] = useState('');
+  const [fixSuccess, setFixSuccess] = useState('');
+
   useEffect(() => {
     if (!uuid) return;
     setLoading(true);
@@ -155,6 +213,104 @@ export default function MovieDetails() {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [uuid]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  // TMDB search with debounce for fix match
+  useEffect(() => {
+    if (!fixSearchQuery.trim() || !showFixMatch) {
+      setFixMovieResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setFixSearching(true);
+      try {
+        const data = await gqlFetch<{ tmdbSearchMovies: TmdbMovieResult[] }>(
+          TMDB_SEARCH_MOVIES,
+          { query: fixSearchQuery.trim() },
+        );
+        setFixMovieResults(data.tmdbSearchMovies ?? []);
+      } catch {
+        setFixMovieResults([]);
+      } finally {
+        setFixSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [fixSearchQuery, showFixMatch]);
+
+  function openFixMatch() {
+    setDropdownOpen(false);
+    setShowFixMatch(true);
+    setFixSearchQuery(movie?.title ?? '');
+    setFixTmdbIdInput('');
+    setFixMovieResults([]);
+    setFixError('');
+    setFixSuccess('');
+  }
+
+  function closeFixMatch() {
+    setShowFixMatch(false);
+    setFixSearchQuery('');
+    setFixTmdbIdInput('');
+    setFixMovieResults([]);
+    setFixError('');
+    setFixSuccess('');
+  }
+
+  async function doFixMatch(tmdbID: number) {
+    if (!movie || !file) return;
+    setFixing(true);
+    setFixError('');
+    setFixSuccess('');
+    try {
+      const data = await gqlFetch<{
+        updateMovieFileMetadata: {
+          error: { message: string; hasError: boolean } | null;
+          mediaItem: { uuid: string } | null;
+        };
+      }>(UPDATE_MOVIE_FILE, {
+        input: { movieFileUUID: file.uuid, tmdbID },
+      });
+      if (data.updateMovieFileMetadata.error?.hasError) {
+        setFixError(data.updateMovieFileMetadata.error.message);
+        return;
+      }
+      setFixSuccess('Match updated successfully!');
+      const newUuid = data.updateMovieFileMetadata.mediaItem?.uuid;
+      setTimeout(() => {
+        closeFixMatch();
+        if (newUuid && newUuid !== movie.uuid) {
+          navigate(`/movie/${newUuid}`, { replace: true });
+        } else {
+          window.location.reload();
+        }
+      }, 800);
+    } catch (err) {
+      setFixError(err instanceof Error ? err.message : 'Failed to update match');
+    } finally {
+      setFixing(false);
+    }
+  }
+
+  function handleFixTmdbIdSubmit() {
+    const id = parseInt(fixTmdbIdInput.trim(), 10);
+    if (isNaN(id) || id <= 0) {
+      setFixError('Please enter a valid TMDB ID');
+      return;
+    }
+    doFixMatch(id);
+  }
 
   async function toggleWatched() {
     if (!movie || toggling) return;
@@ -271,6 +427,25 @@ export default function MovieDetails() {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
               {toggling ? 'Updating…' : movie.playState?.finished ? 'Watched' : 'Mark Watched'}
             </button>
+            {isAdmin && (
+              <div className="admin-dropdown" ref={dropdownRef}>
+                <button
+                  className="btn-movie-toggle admin-dropdown-toggle-inline"
+                  onClick={() => setDropdownOpen(o => !o)}
+                  title="More options"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                {dropdownOpen && (
+                  <div className="admin-dropdown-menu">
+                    <button className="admin-dropdown-item" onClick={openFixMatch}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Fix Match
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Progress bar if in-progress */}
@@ -353,6 +528,113 @@ export default function MovieDetails() {
           </div>
         </div>
       </div>
+
+      {/* Fix Match Modal */}
+      {showFixMatch && createPortal(
+        <div className="um-overlay" onClick={closeFixMatch}>
+          <div className="um-panel" onClick={e => e.stopPropagation()}>
+            <div className="um-panel-header">
+              <div>
+                <h2>Fix Match</h2>
+                <p className="um-panel-filename">{movie.title} ({movie.year})</p>
+              </div>
+              <button className="um-panel-close" onClick={closeFixMatch}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {fixError && (
+              <div className="admin-error" style={{ margin: '0 24px 16px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                {fixError}
+              </div>
+            )}
+
+            {fixSuccess && (
+              <div className="um-success" style={{ margin: '0 24px 16px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                {fixSuccess}
+              </div>
+            )}
+
+            {/* TMDB ID Input */}
+            <div className="um-id-section">
+              <label className="um-label">TMDB ID</label>
+              <div className="um-id-row">
+                <input
+                  type="text"
+                  className="um-input"
+                  placeholder="Enter movie TMDB ID\u2026"
+                  value={fixTmdbIdInput}
+                  onChange={e => setFixTmdbIdInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleFixTmdbIdSubmit()}
+                />
+                <button
+                  className="um-id-submit"
+                  onClick={handleFixTmdbIdSubmit}
+                  disabled={fixing || !fixTmdbIdInput.trim()}
+                >
+                  {fixing ? 'Matching\u2026' : 'Apply'}
+                </button>
+              </div>
+            </div>
+
+            {/* TMDB Search */}
+            <div className="um-search-section">
+              <label className="um-label">Search TMDB</label>
+              <div className="um-search-input-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input
+                  type="text"
+                  className="um-search-input"
+                  placeholder="Search for a movie\u2026"
+                  value={fixSearchQuery}
+                  onChange={e => setFixSearchQuery(e.target.value)}
+                  autoFocus
+                />
+                {fixSearching && <div className="um-search-spinner" />}
+              </div>
+            </div>
+
+            {/* Search Results */}
+            <div className="um-results">
+              {fixMovieResults.map(r => (
+                <button
+                  className="um-result-card"
+                  key={r.tmdbID}
+                  onClick={() => doFixMatch(r.tmdbID)}
+                  disabled={fixing}
+                >
+                  <div className="um-result-poster">
+                    {r.posterPath ? (
+                      <img src={tmdbImg(r.posterPath, 'w300')} alt={r.title} onLoad={e => e.currentTarget.classList.add('loaded')} />
+                    ) : (
+                      <div className="um-no-poster">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="um-result-info">
+                    <div className="um-result-title">{r.title}</div>
+                    <div className="um-result-year">{r.releaseYear ?? 'Unknown year'}</div>
+                    <div className="um-result-id">TMDB: {r.tmdbID}</div>
+                    {r.overview && <div className="um-result-overview">{r.overview}</div>}
+                  </div>
+                </button>
+              ))}
+
+              {!fixSearching && fixSearchQuery.trim() && fixMovieResults.length === 0 && (
+                <div className="um-no-results">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <p>No results found</p>
+                  <span>Try a different search term or enter the TMDB ID directly</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   );
 }

@@ -191,6 +191,22 @@
   cursor: not-allowed;
 }
 
+/* ─── Admin Dropdown (inline variant for meta-row) ─── */
+.admin-dropdown-toggle-inline {
+  min-width: 32px !important;
+  padding: 4px 8px !important;
+  gap: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0 !important;
+}
+
+.admin-dropdown-toggle-inline svg {
+  width: 14px;
+  height: 14px;
+}
+
 .meta-progress-label {
   color: var(--cyan);
   font-weight: 500;
@@ -304,6 +320,68 @@
   font-size: 14px;
   color: var(--text);
   word-break: break-all;
+}
+
+/* ─── Admin Dropdown ─── */
+.admin-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.admin-dropdown-toggle {
+  min-width: 40px !important;
+  padding: 10px 12px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-dropdown-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.admin-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-deep);
+  border: 1px solid rgba(63, 84, 94, 0.5);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeInScale 0.15s var(--ease-out-expo) both;
+  transform-origin: top right;
+}
+
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.admin-dropdown-item:hover {
+  background: rgba(0, 207, 200, 0.08);
+  color: var(--cyan);
+}
+
+.admin-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 /* ─── Responsive ─── */

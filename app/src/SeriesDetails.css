@@ -401,6 +401,281 @@
   padding: 40px 0;
 }
 
+/* ─── Admin Dropdown (inline variant for meta-row) ─── */
+.admin-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+.admin-dropdown-toggle-inline {
+  min-width: 32px !important;
+  padding: 4px 8px !important;
+  gap: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0 !important;
+}
+
+.admin-dropdown-toggle-inline svg {
+  width: 14px;
+  height: 14px;
+}
+
+.admin-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-deep);
+  border: 1px solid rgba(63, 84, 94, 0.5);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeInScale 0.15s var(--ease-out-expo) both;
+  transform-origin: top right;
+}
+
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+}
+
+.admin-dropdown-item:hover {
+  background: rgba(0, 207, 200, 0.08);
+  color: var(--cyan);
+}
+
+.admin-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ─── Fix Match: Wider Panel ─── */
+.fm-panel-wide {
+  max-width: 960px;
+}
+
+/* ─── Fix Match: Two-column body ─── */
+.fm-body {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.fm-col-left {
+  border-right: 1px solid rgba(63, 84, 94, 0.25);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-card) transparent;
+}
+
+.fm-col-left .um-id-section {
+  padding: 16px 20px 20px;
+}
+
+.fm-col-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fm-col-right .um-search-section {
+  padding: 16px 20px 0;
+}
+
+.fm-col-right .um-results {
+  padding: 12px 20px 20px;
+}
+
+/* ─── Fix Match: Scope Selection ─── */
+.fm-scope-section {
+  padding: 16px 20px 0;
+}
+
+.fm-scope-options {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.fm-scope-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  user-select: none;
+}
+
+.fm-scope-option input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(63, 84, 94, 0.6);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.fm-scope-option input[type="radio"]:checked {
+  border-color: var(--cyan);
+}
+
+.fm-scope-option input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cyan);
+}
+
+/* ─── Fix Match: Episode Selection ─── */
+.fm-episode-select {
+  margin-top: 8px;
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  animation: fadeInScale 0.2s var(--ease-out-expo) both;
+}
+
+.fm-episode-select-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(63, 84, 94, 0.2);
+}
+
+.fm-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.fm-select-all-label input[type="checkbox"],
+.fm-episode-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(63, 84, 94, 0.6);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.fm-select-all-label input[type="checkbox"]:checked,
+.fm-episode-item input[type="checkbox"]:checked {
+  background: var(--cyan);
+  border-color: var(--cyan);
+}
+
+.fm-select-all-label input[type="checkbox"]:checked::after,
+.fm-episode-item input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--bg-deep);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.fm-selected-count {
+  font-size: 11px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+
+.fm-episode-list {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-card) transparent;
+}
+
+.fm-season-group {
+  padding: 6px 0;
+}
+
+.fm-season-label {
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.fm-episode-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.fm-episode-item:hover {
+  background: rgba(63, 84, 94, 0.2);
+}
+
+.fm-ep-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan);
+  min-width: 28px;
+  opacity: 0.8;
+}
+
+.fm-ep-name {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
   .season-tabs {
@@ -419,5 +694,14 @@
 
   .episode-info {
     padding: 12px 16px 16px;
+  }
+
+  .fm-body {
+    grid-template-columns: 1fr;
+  }
+
+  .fm-col-left {
+    border-right: none;
+    border-bottom: 1px solid rgba(63, 84, 94, 0.25);
   }
 }

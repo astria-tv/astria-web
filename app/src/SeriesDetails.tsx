@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './SeriesDetails.css';
 
@@ -67,6 +68,14 @@ interface Series {
   unwatchedEpisodesCount: number;
 }
 
+interface TmdbSeriesResult {
+  name: string;
+  firstAirYear: number | null;
+  tmdbID: number;
+  backdropPath: string;
+  posterPath: string;
+}
+
 /* ─── Query ─── */
 const SERIES_DETAIL_QUERY = `query SeriesDetail($uuid: String!) {
   series(uuid: $uuid) {
@@ -129,6 +138,18 @@ const CREATE_PLAY_STATE = `mutation CreatePlayState($uuid: String!, $finished: B
   }
 }`;
 
+const TMDB_SEARCH_SERIES = `query ($query: String!) {
+  tmdbSearchSeries(query: $query) {
+    name firstAirYear tmdbID backdropPath posterPath
+  }
+}`;
+
+const UPDATE_EPISODE_FILE = `mutation ($input: UpdateEpisodeFileMetadataInput!) {
+  updateEpisodeFileMetadata(input: $input) {
+    error { message hasError }
+  }
+}`;
+
 /* ─── Helpers ─── */
 function tmdbImg(path: string, size = 'original'): string {
   if (!path) return '';
@@ -141,6 +162,17 @@ function formatDuration(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
+}
+
+function parseJwt(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(payload));
+  } catch {
+    return null;
+  }
 }
 
 function episodeProgress(ep: Episode): number {
@@ -179,6 +211,30 @@ export default function SeriesDetails() {
   const [togglingSeason, setTogglingSeason] = useState(false);
   const [togglingSeries, setTogglingSeries] = useState(false);
 
+  // Admin check
+  const isAdmin = useMemo(() => {
+    const jwt = sessionStorage.getItem('jwt');
+    if (!jwt) return false;
+    const payload = parseJwt(jwt);
+    return payload?.admin === true;
+  }, []);
+
+  // Dropdown state
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fix match state
+  const [showFixMatch, setShowFixMatch] = useState(false);
+  const [fixEntireSeries, setFixEntireSeries] = useState(true);
+  const [fixSelectedFileUUIDs, setFixSelectedFileUUIDs] = useState<Set<string>>(new Set());
+  const [fixSearchQuery, setFixSearchQuery] = useState('');
+  const [fixTmdbIdInput, setFixTmdbIdInput] = useState('');
+  const [fixSeriesResults, setFixSeriesResults] = useState<TmdbSeriesResult[]>([]);
+  const [fixSearching, setFixSearching] = useState(false);
+  const [fixing, setFixing] = useState(false);
+  const [fixError, setFixError] = useState('');
+  const [fixSuccess, setFixSuccess] = useState('');
+
   useEffect(() => {
     if (!uuid) return;
     setLoading(true);
@@ -204,6 +260,133 @@ export default function SeriesDetails() {
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, [uuid]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  // TMDB search with debounce for fix match
+  useEffect(() => {
+    if (!fixSearchQuery.trim() || !showFixMatch) {
+      setFixSeriesResults([]);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      setFixSearching(true);
+      try {
+        const data = await gqlFetch<{ tmdbSearchSeries: TmdbSeriesResult[] }>(
+          TMDB_SEARCH_SERIES,
+          { query: fixSearchQuery.trim() },
+        );
+        setFixSeriesResults(data.tmdbSearchSeries ?? []);
+      } catch {
+        setFixSeriesResults([]);
+      } finally {
+        setFixSearching(false);
+      }
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [fixSearchQuery, showFixMatch]);
+
+  function openFixMatch() {
+    setDropdownOpen(false);
+    setShowFixMatch(true);
+    setFixEntireSeries(true);
+    setFixSelectedFileUUIDs(new Set());
+    setFixSearchQuery(series?.name ?? '');
+    setFixTmdbIdInput('');
+    setFixSeriesResults([]);
+    setFixError('');
+    setFixSuccess('');
+  }
+
+  function closeFixMatch() {
+    setShowFixMatch(false);
+    setFixEntireSeries(true);
+    setFixSelectedFileUUIDs(new Set());
+    setFixSearchQuery('');
+    setFixTmdbIdInput('');
+    setFixSeriesResults([]);
+    setFixError('');
+    setFixSuccess('');
+  }
+
+  async function doFixMatch(tmdbID: number) {
+    if (!series) return;
+    setFixing(true);
+    setFixError('');
+    setFixSuccess('');
+    try {
+      const input: Record<string, unknown> = { tmdbID };
+      if (fixEntireSeries) {
+        input.seriesUUID = series.uuid;
+      } else {
+        input.episodeFileUUID = Array.from(fixSelectedFileUUIDs);
+      }
+      const data = await gqlFetch<{
+        updateEpisodeFileMetadata: { error: { message: string; hasError: boolean } | null };
+      }>(UPDATE_EPISODE_FILE, { input });
+      if (data.updateEpisodeFileMetadata.error?.hasError) {
+        setFixError(data.updateEpisodeFileMetadata.error.message);
+        return;
+      }
+      setFixSuccess('Match updated successfully!');
+      setTimeout(() => {
+        closeFixMatch();
+        window.location.reload();
+      }, 800);
+    } catch (err) {
+      setFixError(err instanceof Error ? err.message : 'Failed to update match');
+    } finally {
+      setFixing(false);
+    }
+  }
+
+  function handleFixTmdbIdSubmit() {
+    const id = parseInt(fixTmdbIdInput.trim(), 10);
+    if (isNaN(id) || id <= 0) {
+      setFixError('Please enter a valid TMDB ID');
+      return;
+    }
+    if (!fixEntireSeries && fixSelectedFileUUIDs.size === 0) {
+      setFixError('Please select at least one episode');
+      return;
+    }
+    doFixMatch(id);
+  }
+
+  function handleFixResultClick(tmdbID: number) {
+    if (!fixEntireSeries && fixSelectedFileUUIDs.size === 0) {
+      setFixError('Please select at least one episode');
+      return;
+    }
+    doFixMatch(tmdbID);
+  }
+
+  function toggleAllEpisodeFiles(checked: boolean) {
+    if (!series) return;
+    if (checked) {
+      const allUUIDs = new Set<string>();
+      for (const s of series.seasons) {
+        for (const ep of s.episodes) {
+          for (const f of ep.files) {
+            allUUIDs.add(f.uuid);
+          }
+        }
+      }
+      setFixSelectedFileUUIDs(allUUIDs);
+    } else {
+      setFixSelectedFileUUIDs(new Set());
+    }
+  }
 
   async function toggleEpisodeWatched(ep: Episode, e: React.MouseEvent) {
     e.stopPropagation();
@@ -404,8 +587,25 @@ export default function SeriesDetails() {
                   {togglingSeries ? 'Updating…' : allSeriesWatched ? 'Series Watched' : 'Mark All Watched'}
                 </button>
               );
-            })()}
-          </div>
+            })()}            {isAdmin && (
+              <div className="admin-dropdown" ref={dropdownRef}>
+                <button
+                  className="btn-series-toggle admin-dropdown-toggle-inline"
+                  onClick={() => setDropdownOpen(o => !o)}
+                  title="More options"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                </button>
+                {dropdownOpen && (
+                  <div className="admin-dropdown-menu">
+                    <button className="admin-dropdown-item" onClick={openFixMatch}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      Fix Match
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}          </div>
 
           <div className="synopsis">
             <h3>Synopsis</h3>
@@ -535,6 +735,196 @@ export default function SeriesDetails() {
           )}
         </div>
       </div>
+
+      {/* Fix Match Modal */}
+      {showFixMatch && series && createPortal(
+        <div className="um-overlay" onClick={closeFixMatch}>
+          <div className="um-panel fm-panel-wide" onClick={e => e.stopPropagation()}>
+            <div className="um-panel-header">
+              <div>
+                <h2>Fix Match</h2>
+                <p className="um-panel-filename">{series.name}</p>
+              </div>
+              <button className="um-panel-close" onClick={closeFixMatch}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            {fixError && (
+              <div className="admin-error" style={{ margin: '0 24px 12px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                {fixError}
+              </div>
+            )}
+
+            {fixSuccess && (
+              <div className="um-success" style={{ margin: '0 24px 12px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                {fixSuccess}
+              </div>
+            )}
+
+            <div className="fm-body">
+              {/* Left column: scope + TMDB ID */}
+              <div className="fm-col-left">
+                {/* Scope Selection */}
+                <div className="fm-scope-section">
+                  <label className="um-label">What to fix</label>
+                  <div className="fm-scope-options">
+                    <label className="fm-scope-option">
+                      <input
+                        type="radio"
+                        name="fixScope"
+                        checked={fixEntireSeries}
+                        onChange={() => { setFixEntireSeries(true); setFixSelectedFileUUIDs(new Set()); }}
+                      />
+                      <span>Entire series</span>
+                    </label>
+                    <label className="fm-scope-option">
+                      <input
+                        type="radio"
+                        name="fixScope"
+                        checked={!fixEntireSeries}
+                        onChange={() => setFixEntireSeries(false)}
+                      />
+                      <span>Select episodes</span>
+                    </label>
+                  </div>
+
+                  {/* Episode selection list */}
+                  {!fixEntireSeries && (
+                    <div className="fm-episode-select">
+                      <div className="fm-episode-select-header">
+                        <label className="fm-select-all-label">
+                          <input
+                            type="checkbox"
+                            checked={(() => {
+                              const total = series.seasons.reduce((sum, s) => sum + s.episodes.reduce((es, ep) => es + ep.files.length, 0), 0);
+                              return total > 0 && fixSelectedFileUUIDs.size === total;
+                            })()}
+                            onChange={e => toggleAllEpisodeFiles(e.target.checked)}
+                          />
+                          <span>Select all</span>
+                        </label>
+                        {fixSelectedFileUUIDs.size > 0 && (
+                          <span className="fm-selected-count">{fixSelectedFileUUIDs.size} selected</span>
+                        )}
+                      </div>
+                      <div className="fm-episode-list">
+                        {series.seasons.map(s => (
+                          <div key={s.uuid} className="fm-season-group">
+                            <div className="fm-season-label">{s.name || `Season ${s.seasonNumber}`}</div>
+                            {s.episodes.map(ep => {
+                              const epFile = ep.files?.[0];
+                              if (!epFile) return null;
+                              return (
+                                <label key={ep.uuid} className="fm-episode-item">
+                                  <input
+                                    type="checkbox"
+                                    checked={fixSelectedFileUUIDs.has(epFile.uuid)}
+                                    onChange={e => {
+                                      setFixSelectedFileUUIDs(prev => {
+                                        const next = new Set(prev);
+                                        if (e.target.checked) next.add(epFile.uuid);
+                                        else next.delete(epFile.uuid);
+                                        return next;
+                                      });
+                                    }}
+                                  />
+                                  <span className="fm-ep-number">E{ep.episodeNumber}</span>
+                                  <span className="fm-ep-name">{ep.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* TMDB ID Input */}
+                <div className="um-id-section">
+                  <label className="um-label">TMDB ID</label>
+                  <div className="um-id-row">
+                    <input
+                      type="text"
+                      className="um-input"
+                      placeholder="Enter series TMDB ID\u2026"
+                      value={fixTmdbIdInput}
+                      onChange={e => setFixTmdbIdInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleFixTmdbIdSubmit()}
+                    />
+                    <button
+                      className="um-id-submit"
+                      onClick={handleFixTmdbIdSubmit}
+                      disabled={fixing || !fixTmdbIdInput.trim()}
+                    >
+                      {fixing ? 'Matching\u2026' : 'Apply'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right column: search + results */}
+              <div className="fm-col-right">
+                {/* TMDB Search */}
+                <div className="um-search-section">
+                  <label className="um-label">Search TMDB</label>
+                  <div className="um-search-input-wrap">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input
+                      type="text"
+                      className="um-search-input"
+                      placeholder="Search for a series\u2026"
+                      value={fixSearchQuery}
+                      onChange={e => setFixSearchQuery(e.target.value)}
+                      autoFocus
+                    />
+                    {fixSearching && <div className="um-search-spinner" />}
+                  </div>
+                </div>
+
+                {/* Search Results */}
+                <div className="um-results">
+                  {fixSeriesResults.map(r => (
+                    <button
+                      className="um-result-card"
+                      key={r.tmdbID}
+                      onClick={() => handleFixResultClick(r.tmdbID)}
+                      disabled={fixing}
+                    >
+                      <div className="um-result-poster">
+                        {r.posterPath ? (
+                          <img src={tmdbImg(r.posterPath, 'w300')} alt={r.name} onLoad={e => e.currentTarget.classList.add('loaded')} />
+                        ) : (
+                          <div className="um-no-poster">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="um-result-info">
+                        <div className="um-result-title">{r.name}</div>
+                        <div className="um-result-year">{r.firstAirYear ?? 'Unknown year'}</div>
+                        <div className="um-result-id">TMDB: {r.tmdbID}</div>
+                      </div>
+                    </button>
+                  ))}
+
+                  {!fixSearching && fixSearchQuery.trim() && fixSeriesResults.length === 0 && (
+                    <div className="um-no-results">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <p>No results found</p>
+                      <span>Try a different search term or enter the TMDB ID directly</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </>
   );
 }
