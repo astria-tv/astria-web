@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './Login';
 import Dashboard from './Dashboard';
@@ -10,6 +11,7 @@ import AdminSettings from './AdminSettings';
 import ActiveStreams from './ActiveStreams';
 import UnmatchedMedia from './UnmatchedMedia';
 import Register from './Register';
+import Setup from './Setup';
 import AppLayout from './AppLayout';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -20,11 +22,30 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Redirects to /setup when the server has no users yet */
+function RedirectIfSetup({ children }: { children: React.ReactNode }) {
+  const [checking, setChecking] = useState(true);
+  const [needsSetup, setNeedsSetup] = useState(false);
+
+  useEffect(() => {
+    fetch('/olaris/m/v1/user/setup')
+      .then(r => r.text())
+      .then(text => setNeedsSetup(text.trim() === 'true'))
+      .catch(() => {})
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return null;
+  if (needsSetup) return <Navigate to="/setup" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={<RedirectIfSetup><Login /></RedirectIfSetup>} />
+        <Route path="/setup" element={<Setup />} />
         <Route path="/register" element={<Register />} />
         <Route
           path="/dashboard"
