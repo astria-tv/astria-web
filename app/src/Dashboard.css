@@ -790,3 +790,244 @@
   font-size: 14px;
   color: var(--text-dim);
 }
+
+/* ─── EMPTY STATE ─── */
+.empty-hero {
+  position: relative;
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: -72px;
+  padding: 120px 60px 60px;
+}
+.empty-hero-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(170deg, #1a3a4a 0%, #0d1518 100%);
+  overflow: hidden;
+}
+.empty-hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.orb-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 207, 200, 0.4), transparent 70%);
+  top: -100px;
+  right: 10%;
+  animation-delay: 0s;
+}
+.orb-2 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(0, 156, 151, 0.35), transparent 70%);
+  bottom: -50px;
+  left: 15%;
+  animation-delay: -4s;
+}
+.orb-3 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(56, 152, 236, 0.25), transparent 70%);
+  top: 30%;
+  left: 50%;
+  animation-delay: -8s;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.1); }
+  66% { transform: translate(-20px, 15px) scale(0.95); }
+}
+.empty-hero::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(transparent, var(--bg-deep));
+  pointer-events: none;
+}
+.empty-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 520px;
+  animation: fadeInUp 0.8s var(--ease-out-expo) 0.15s both;
+}
+.empty-hero-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 207, 200, 0.12);
+  border-radius: 20px;
+  color: var(--cyan);
+  animation: fadeInScale 0.6s var(--ease-out-expo) 0.3s both;
+}
+.empty-hero-icon svg {
+  width: 36px;
+  height: 36px;
+}
+.empty-hero-title {
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, var(--text), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.empty-hero-subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Getting Started Steps */
+.empty-steps-section {
+  animation-delay: 0.1s !important;
+}
+.empty-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.empty-step-card {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius);
+  padding: 32px 24px 28px;
+  text-align: center;
+  transition: transform 0.3s var(--ease-out), border-color 0.3s, box-shadow 0.3s;
+  animation: fadeInUp 0.6s var(--ease-out-expo) both;
+}
+.empty-step-card:nth-child(1) { animation-delay: 0.2s; }
+.empty-step-card:nth-child(2) { animation-delay: 0.3s; }
+.empty-step-card:nth-child(3) { animation-delay: 0.4s; }
+.empty-step-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 207, 200, 0.25);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+}
+.empty-step-number {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 207, 200, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+.empty-step-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 207, 200, 0.1);
+  border-radius: 14px;
+  color: var(--cyan);
+  transition: background 0.25s, transform 0.25s;
+}
+.empty-step-card:hover .empty-step-icon {
+  background: rgba(0, 207, 200, 0.18);
+  transform: scale(1.06);
+}
+.empty-step-icon svg {
+  width: 24px;
+  height: 24px;
+}
+.empty-step-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.empty-step-card p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* CTA Button */
+.empty-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 36px;
+  animation: fadeInUp 0.6s var(--ease-out-expo) 0.5s both;
+}
+
+/* Non-admin waiting state */
+.empty-waiting-section {
+  padding-bottom: 80px;
+}
+.empty-waiting-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 48px 32px;
+  background: var(--bg-surface);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius);
+  max-width: 420px;
+  margin: 0 auto;
+  animation: fadeInUp 0.6s var(--ease-out-expo) 0.25s both;
+}
+.empty-waiting-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(56, 152, 236, 0.12);
+  border-radius: 50%;
+  color: #3898ec;
+  margin-bottom: 20px;
+  animation: gentlePulse 3s ease-in-out infinite;
+}
+.empty-waiting-icon svg {
+  width: 28px;
+  height: 28px;
+}
+@keyframes gentlePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.06); opacity: 0.85; }
+}
+.empty-waiting-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.empty-waiting-card p {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* Responsive: stack steps vertically on narrow screens */
+@media (max-width: 768px) {
+  .empty-steps {
+    grid-template-columns: 1fr;
+  }
+  .empty-hero {
+    padding: 100px 24px 48px;
+    min-height: 320px;
+  }
+  .empty-hero-title {
+    font-size: 28px;
+  }
+}
