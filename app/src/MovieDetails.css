@@ -300,6 +300,189 @@
 }
 
 /* ─── Info Grid ─── */
+
+/* ─── Play Button Group (split button for multi-version) ─── */
+.play-btn-group {
+  position: relative;
+  display: inline-flex;
+}
+.play-btn-group .btn-play {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+.play-btn-group .btn-play-dropdown {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 10px;
+  border-left: 1px solid rgba(0, 0, 0, 0.15);
+  min-width: 0;
+  gap: 0;
+}
+.play-btn-group .btn-play-dropdown svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s var(--ease-out);
+}
+.play-btn-group .btn-play-dropdown.active svg {
+  transform: rotate(180deg);
+}
+/* When only one file, keep normal border-radius */
+.play-btn-group .btn-play:only-child {
+  border-radius: var(--radius-sm);
+}
+.play-btn-res {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.7;
+  padding-left: 2px;
+}
+
+/* ─── Version Picker Dropdown ─── */
+.version-picker {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 320px;
+  background: var(--bg-deep);
+  border: 1px solid rgba(63, 84, 94, 0.5);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  overflow: hidden;
+  animation: fadeInScale 0.2s var(--ease-out-expo) both;
+  transform-origin: top left;
+}
+.version-picker-header {
+  padding: 14px 16px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(63, 84, 94, 0.2);
+}
+.version-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(63, 84, 94, 0.15);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.version-option:last-of-type {
+  border-bottom: none;
+}
+.version-option:hover {
+  background: rgba(0, 207, 200, 0.08);
+}
+.version-option.selected {
+  background: rgba(0, 207, 200, 0.12);
+}
+.version-option-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.version-res {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.version-tags {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.version-tag {
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(63, 84, 94, 0.4);
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.version-size {
+  font-size: 13px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.version-check {
+  width: 16px;
+  height: 16px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.version-picker-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border-top: 1px solid rgba(63, 84, 94, 0.3);
+}
+.version-picker-hint svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ─── Versions Summary (below actions) ─── */
+.versions-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  font-size: 13px;
+  color: var(--text-dim);
+  animation: fadeIn 0.4s var(--ease-out) 0.2s both;
+}
+.versions-summary > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.versions-chips {
+  display: flex;
+  gap: 6px;
+}
+.version-chip {
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-dim);
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.4);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+.version-chip:hover {
+  color: var(--text);
+  background: rgba(63, 84, 94, 0.5);
+}
+.version-chip.active {
+  color: var(--cyan);
+  border-color: rgba(0, 207, 200, 0.35);
+  background: rgba(0, 207, 200, 0.12);
+}
+
+/* ─── Info Grid ─── */
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

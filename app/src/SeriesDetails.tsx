@@ -211,6 +211,10 @@ export default function SeriesDetails() {
   const [togglingSeason, setTogglingSeason] = useState(false);
   const [togglingSeries, setTogglingSeries] = useState(false);
 
+  // Episode file picker state (for episodes with multiple files)
+  const [filePickerEp, setFilePickerEp] = useState<Episode | null>(null);
+  const filePickerRef = useRef<HTMLDivElement>(null);
+
   // Admin check
   const isAdmin = useMemo(() => {
     const jwt = sessionStorage.getItem('jwt');
@@ -274,6 +278,58 @@ export default function SeriesDetails() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
+
+  // Close file picker on outside click
+  useEffect(() => {
+    if (!filePickerEp) return;
+    function handleClick(e: MouseEvent) {
+      if (filePickerRef.current && !filePickerRef.current.contains(e.target as Node)) {
+        setFilePickerEp(null);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [filePickerEp]);
+
+  function handleEpisodeClick(ep: Episode) {
+    if (ep.files.length === 0) return;
+    if (ep.files.length === 1) {
+      const epFile = ep.files[0];
+      navigate(`/play/${epFile.uuid}`, {
+        state: {
+          title: ep.name,
+          subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}`,
+          mediaUuid: ep.uuid,
+          startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
+        },
+      });
+    } else {
+      // Show file picker
+      setFilePickerEp(ep);
+    }
+  }
+
+  function playEpisodeFile(ep: Episode, f: EpisodeFile) {
+    const vs = f.streams?.find(s => s.streamType === 'video');
+    const res = vs?.resolution;
+    navigate(`/play/${f.uuid}`, {
+      state: {
+        title: ep.name,
+        subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}${res ? ` · ${res}` : ''}`,
+        mediaUuid: ep.uuid,
+        startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
+      },
+    });
+  }
+
+  function formatFileSize(bytesStr: string): string {
+    const bytes = parseInt(bytesStr, 10);
+    if (isNaN(bytes) || bytes === 0) return '—';
+    const gb = bytes / (1024 * 1024 * 1024);
+    if (gb >= 1) return `${gb.toFixed(1)} GB`;
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(0)} MB`;
+  }
 
   // TMDB search with debounce for fix match
   useEffect(() => {
@@ -660,23 +716,13 @@ export default function SeriesDetails() {
                       const progress = episodeProgress(ep);
                       const duration = ep.files?.[0]?.totalDuration;
                       const isWatched = ep.playState?.finished;
+                      const hasMultiFiles = ep.files.length > 1;
                       return (
                         <div
                           className={`episode-card ${isWatched ? 'watched' : ''}`}
                           key={ep.uuid}
                           style={{ cursor: ep.files?.[0] ? 'pointer' : undefined }}
-                          onClick={() => {
-                            const epFile = ep.files?.[0];
-                            if (!epFile) return;
-                            navigate(`/play/${epFile.uuid}`, {
-                              state: {
-                                title: ep.name,
-                                subtitle: `${series.name} · ${season.name} · E${ep.episodeNumber}`,
-                                mediaUuid: ep.uuid,
-                                startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
-                              },
-                            });
-                          }}
+                          onClick={() => handleEpisodeClick(ep)}
                         >
                           <div className="episode-thumb">
                             {ep.stillPath ? (
@@ -710,6 +756,12 @@ export default function SeriesDetails() {
                               {duration != null && duration > 0 && (
                                 <span className="episode-duration">{formatDuration(duration)}</span>
                               )}
+                              {hasMultiFiles && (
+                                <span className="episode-multi-badge" title={`${ep.files.length} versions available`}>
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                                  {ep.files.length}
+                                </span>
+                              )}
                               <button
                                 className={`btn-episode-toggle${isWatched ? ' active' : ''}`}
                                 onClick={(e) => toggleEpisodeWatched(ep, e)}
@@ -737,6 +789,54 @@ export default function SeriesDetails() {
           )}
         </div>
       </div>
+
+      {/* Episode File Picker (for multi-file episodes) */}
+      {filePickerEp && createPortal(
+        <div className="ep-file-picker-overlay" onClick={() => setFilePickerEp(null)}>
+          <div
+            className="ep-file-picker"
+            ref={filePickerRef}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="ep-file-picker-header">
+              <span className="ep-file-picker-title">Choose Version</span>
+              <span className="ep-file-picker-ep">E{filePickerEp.episodeNumber} · {filePickerEp.name}</span>
+            </div>
+            {[...filePickerEp.files]
+              .sort((a, b) => {
+                const resA = parseInt(a.streams?.find(s => s.streamType === 'video')?.resolution ?? '') || 0;
+                const resB = parseInt(b.streams?.find(s => s.streamType === 'video')?.resolution ?? '') || 0;
+                return resB - resA;
+              })
+              .map(f => {
+                const vs = f.streams?.find(s => s.streamType === 'video');
+                const res = vs?.resolution ?? 'Unknown';
+                const codec = vs?.codecName?.toUpperCase() ?? '';
+                const bitrate = vs?.bitRate ? `${Math.round(vs.bitRate / 1000)}k` : '';
+                const size = formatFileSize(f.fileSize);
+                return (
+                  <button
+                    key={f.uuid}
+                    className="ep-file-option"
+                    onClick={() => {
+                      playEpisodeFile(filePickerEp, f);
+                      setFilePickerEp(null);
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="ep-file-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span className="ep-file-res">{res}</span>
+                    <span className="ep-file-tags">
+                      {codec && <span className="ep-file-tag">{codec}</span>}
+                      {bitrate && <span className="ep-file-tag">{bitrate}</span>}
+                    </span>
+                    <span className="ep-file-size">{size}</span>
+                  </button>
+                );
+              })}
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {/* Fix Match Modal */}
       {showFixMatch && series && createPortal(

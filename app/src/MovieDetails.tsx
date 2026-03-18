@@ -333,6 +333,23 @@ export default function MovieDetails() {
     }
   }
 
+  // File version selection state (must be before early returns per Rules of Hooks)
+  const [selectedFileIdx, setSelectedFileIdx] = useState(0);
+  const [showVersionPicker, setShowVersionPicker] = useState(false);
+  const versionPickerRef = useRef<HTMLDivElement>(null);
+
+  // Close version picker on outside click
+  useEffect(() => {
+    if (!showVersionPicker) return;
+    function handleClick(e: MouseEvent) {
+      if (versionPickerRef.current && !versionPickerRef.current.contains(e.target as Node)) {
+        setShowVersionPicker(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showVersionPicker]);
+
   if (loading) {
     return (
       <div className="loading-state"><div className="spinner" /></div>
@@ -348,7 +365,18 @@ export default function MovieDetails() {
     );
   }
 
-  const file = movie.files?.[0];
+  const hasMultipleFiles = movie.files.length > 1;
+
+  // Sort files by resolution (highest first) for display
+  const sortedFiles = [...movie.files].sort((a, b) => {
+    const resA = a.streams?.find(s => s.streamType === 'video')?.resolution ?? '';
+    const resB = b.streams?.find(s => s.streamType === 'video')?.resolution ?? '';
+    const numA = parseInt(resA) || 0;
+    const numB = parseInt(resB) || 0;
+    return numB - numA; // highest first
+  });
+
+  const file = sortedFiles[selectedFileIdx] ?? sortedFiles[0];
   const duration = file?.totalDuration;
   const progress = progressPercent(movie);
 
@@ -456,21 +484,74 @@ export default function MovieDetails() {
           )}
 
           <div className="detail-actions">
-            <button className="btn btn-play" onClick={() => {
-              if (file) {
-                navigate(`/play/${file.uuid}`, {
-                  state: {
-                    title: movie.title,
-                    subtitle: [movie.year, duration ? formatDuration(duration) : null, resolutionLabel].filter(Boolean).join(' · '),
-                    mediaUuid: movie.uuid,
-                    startTime: movie.playState?.finished ? 0 : (movie.playState?.playtime ?? 0),
-                  },
-                });
-              }
-            }}>
-              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              {progress > 0 ? 'Resume' : 'Play'}
-            </button>
+            <div className="play-btn-group" ref={versionPickerRef}>
+              <button className="btn btn-play" onClick={() => {
+                if (file) {
+                  navigate(`/play/${file.uuid}`, {
+                    state: {
+                      title: movie.title,
+                      subtitle: [movie.year, duration ? formatDuration(duration) : null, resolutionLabel].filter(Boolean).join(' · '),
+                      mediaUuid: movie.uuid,
+                      startTime: movie.playState?.finished ? 0 : (movie.playState?.playtime ?? 0),
+                    },
+                  });
+                }
+              }}>
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                {progress > 0 ? 'Resume' : 'Play'}
+                {hasMultipleFiles && resolutionLabel && (
+                  <span className="play-btn-res">{resolutionLabel}</span>
+                )}
+              </button>
+              {hasMultipleFiles && (
+                <button
+                  className={`btn btn-play btn-play-dropdown${showVersionPicker ? ' active' : ''}`}
+                  onClick={() => setShowVersionPicker(v => !v)}
+                  title="Choose version"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+              )}
+              {showVersionPicker && (
+                <div className="version-picker">
+                  <div className="version-picker-header">Choose Version</div>
+                  {sortedFiles.map((f, i) => {
+                    const vs = f.streams?.find(s => s.streamType === 'video');
+                    const res = vs?.resolution ?? 'Unknown';
+                    const codec = vs?.codecName?.toUpperCase() ?? '';
+                    const bitrate = vs?.bitRate ? `${Math.round(vs.bitRate / 1000)}k` : '';
+                    const size = formatFileSize(f.fileSize);
+                    const isSelected = i === selectedFileIdx;
+                    return (
+                      <button
+                        key={f.uuid}
+                        className={`version-option${isSelected ? ' selected' : ''}`}
+                        onClick={() => {
+                          setSelectedFileIdx(i);
+                          setShowVersionPicker(false);
+                        }}
+                      >
+                        <div className="version-option-main">
+                          <span className="version-res">{res}</span>
+                          <span className="version-tags">
+                            {codec && <span className="version-tag">{codec}</span>}
+                            {bitrate && <span className="version-tag">{bitrate}</span>}
+                          </span>
+                        </div>
+                        <span className="version-size">{size}</span>
+                        {isSelected && (
+                          <svg className="version-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  <div className="version-picker-hint">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    {sortedFiles.length} versions available
+                  </div>
+                </div>
+              )}
+            </div>
             {movie.imdbID && (
               <a
                 className="btn btn-ghost"
@@ -487,6 +568,28 @@ export default function MovieDetails() {
             <h3>Synopsis</h3>
             <p>{movie.overview || 'No synopsis available.'}</p>
           </div>
+
+          {hasMultipleFiles && (
+            <div className="versions-summary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span>{sortedFiles.length} versions available:</span>
+              <div className="versions-chips">
+                {sortedFiles.map((f, i) => {
+                  const vs = f.streams?.find(s => s.streamType === 'video');
+                  const res = vs?.resolution ?? 'Unknown';
+                  return (
+                    <button
+                      key={f.uuid}
+                      className={`version-chip${i === selectedFileIdx ? ' active' : ''}`}
+                      onClick={() => setSelectedFileIdx(i)}
+                    >
+                      {res}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="info-grid">
             {resolutionLabel && (

@@ -401,6 +401,119 @@
   padding: 40px 0;
 }
 
+/* ─── Episode Multi-file Badge ─── */
+.episode-multi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cyan);
+  background: rgba(0, 207, 200, 0.1);
+  border: 1px solid rgba(0, 207, 200, 0.2);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.episode-multi-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ─── Episode File Picker (Portal overlay) ─── */
+.ep-file-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.15s var(--ease-out) both;
+}
+.ep-file-picker {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 340px;
+  max-width: 420px;
+  width: 90vw;
+  background: var(--bg-deep);
+  border: 1px solid rgba(63, 84, 94, 0.5);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: fadeInScale 0.2s var(--ease-out-expo) both;
+  transform-origin: center center;
+}
+.ep-file-picker-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(63, 84, 94, 0.3);
+}
+.ep-file-picker-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.ep-file-picker-ep {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ep-file-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(63, 84, 94, 0.15);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.ep-file-option:last-of-type {
+  border-bottom: none;
+}
+.ep-file-option:hover {
+  background: rgba(0, 207, 200, 0.08);
+}
+.ep-file-play-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+.ep-file-res {
+  font-weight: 700;
+  min-width: 48px;
+}
+.ep-file-tags {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+}
+.ep-file-tag {
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: rgba(63, 84, 94, 0.4);
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+.ep-file-size {
+  font-size: 13px;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
 /* ─── Admin Dropdown (inline variant for meta-row) ─── */
 .admin-dropdown {
   position: relative;
