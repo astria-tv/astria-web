@@ -7,6 +7,7 @@ import Series from './Series';
 import SeriesDetails from './SeriesDetails';
 import Player from './Player';
 import AdminSettings from './AdminSettings';
+import UnmatchedMedia from './UnmatchedMedia';
 import Register from './Register';
 import AppLayout from './AppLayout';
 
@@ -77,6 +78,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AppLayout><AdminSettings /></AppLayout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/unmatched"
+          element={
+            <RequireAuth>
+              <AppLayout><UnmatchedMedia /></AppLayout>
             </RequireAuth>
           }
         />
