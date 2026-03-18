@@ -71,11 +71,29 @@ function parseJwt(token: string): Record<string, unknown> | null {
   }
 }
 
+const SESSIONS_COUNT_QUERY = `{ sessions { sessionID } }`;
+
+async function fetchSessionCount(): Promise<number> {
+  const jwt = sessionStorage.getItem('jwt');
+  const res = await fetch('/olaris/s/query', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}),
+    },
+    body: JSON.stringify({ query: SESSIONS_COUNT_QUERY }),
+  });
+  if (!res.ok) return 0;
+  const json = await res.json();
+  return json.data?.sessions?.length ?? 0;
+}
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[] | null>(null);
+  const [activeStreamCount, setActiveStreamCount] = useState(0);
   const showBack = location.pathname !== '/dashboard';
 
   const isAdmin = useMemo(() => {
@@ -84,6 +102,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const payload = parseJwt(jwt);
     return payload?.admin === true;
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    fetchSessionCount().then(setActiveStreamCount);
+    const interval = setInterval(() => fetchSessionCount().then(setActiveStreamCount), 10000);
+    return () => clearInterval(interval);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -132,6 +157,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {isAdmin && (
             <button className={`nav-btn${location.pathname === '/streams' ? ' active' : ''}`} title="Active Streams" onClick={() => navigate('/streams')}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><line x1="2" y1="20" x2="2.01" y2="20"/></svg>
+              {activeStreamCount > 0 && <span className="nav-badge">{activeStreamCount}</span>}
             </button>
           )}
           {isAdmin && (

@@ -53,7 +53,9 @@ type MediaItem = Movie | Episode;
 interface Series {
   __typename: 'Series';
   name: string;
+  overview: string;
   posterPath: string;
+  backdropPath: string;
   uuid: string;
   firstAirDate: string;
   unwatchedEpisodesCount: number;
@@ -81,7 +83,9 @@ const DASHBOARD_QUERY = `{
   }
   series(limit: 20, sort: name) {
     name
+    overview
     posterPath
+    backdropPath
     uuid
     firstAirDate
     unwatchedEpisodesCount
@@ -213,7 +217,7 @@ export default function Dashboard() {
   const [upNext, setUpNext] = useState<MediaItem[]>([]);
   const [stats, setStats] = useState<MediaStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [heroMovie, setHeroMovie] = useState<Movie | null>(null);
+  const [heroItem, setHeroItem] = useState<Movie | Series | null>(null);
 
   const isAdmin = (() => {
     const jwt = sessionStorage.getItem('jwt');
@@ -241,12 +245,19 @@ export default function Dashboard() {
       setUpNext(data.upNext ?? []);
       setStats(data.mediaStats);
 
-      // Pick a random movie with a backdrop for the hero
-      const withBackdrop = data.movies.filter(m => m.backdropPath);
-      if (withBackdrop.length > 0) {
-        setHeroMovie(withBackdrop[Math.floor(Math.random() * withBackdrop.length)]);
+      // Pick a random movie or series with a backdrop for the hero
+      const moviesWithBackdrop = data.movies.filter(m => m.backdropPath);
+      const seriesWithBackdrop = data.series.filter(s => s.backdropPath);
+      const allWithBackdrop: (Movie | Series)[] = [
+        ...moviesWithBackdrop.map(m => ({ ...m, __typename: 'Movie' as const })),
+        ...seriesWithBackdrop.map(s => ({ ...s, __typename: 'Series' as const })),
+      ];
+      if (allWithBackdrop.length > 0) {
+        setHeroItem(allWithBackdrop[Math.floor(Math.random() * allWithBackdrop.length)]);
       } else if (data.movies.length > 0) {
-        setHeroMovie(data.movies[0]);
+        setHeroItem({ ...data.movies[0], __typename: 'Movie' as const });
+      } else if (data.series.length > 0) {
+        setHeroItem({ ...data.series[0], __typename: 'Series' as const });
       }
     } catch {
       // silently fail — sections will just be empty
@@ -399,49 +410,60 @@ export default function Dashboard() {
   return (
     <>
         {/* Hero */}
-        {heroMovie && (
-          <section className="hero">
-            <div className="hero-bg">
-              {heroMovie.backdropPath && (
-                <img
-                  className="hero-bg-img"
-                  src={tmdbImg(heroMovie.backdropPath, 'original')}
-                  alt=""
-                  onLoad={e => e.currentTarget.classList.add('loaded')}
-                />
-              )}
-              <div className="shimmer" />
-            </div>
-            <div className="hero-content">
-              <div className="hero-badge">Featured</div>
-              <h1 className="hero-title">{heroMovie.title}</h1>
-              <div className="hero-meta">
-                <span>{heroMovie.year}</span>
-                {heroMovie.files?.[0]?.totalDuration && (
-                  <>
-                    <span>•</span>
-                    <span>{formatDuration(heroMovie.files[0].totalDuration)}</span>
-                  </>
+        {heroItem && (() => {
+          const isMovie = heroItem.__typename === 'Movie';
+          const heroMovie = isMovie ? heroItem as Movie : null;
+          const heroSeries = !isMovie ? heroItem as Series : null;
+          const backdrop = isMovie ? heroMovie!.backdropPath : heroSeries!.backdropPath;
+          const title = isMovie ? heroMovie!.title : heroSeries!.name;
+          const year = isMovie ? heroMovie!.year : heroSeries!.firstAirDate?.substring(0, 4);
+          const overview = isMovie ? heroMovie!.overview : heroSeries!.overview;
+          const duration = isMovie ? heroMovie!.files?.[0]?.totalDuration : null;
+          const detailPath = isMovie ? `/movie/${heroMovie!.uuid}` : `/series/${heroSeries!.uuid}`;
+
+          return (
+            <section className="hero">
+              <div className="hero-bg">
+                {backdrop && (
+                  <img
+                    className="hero-bg-img"
+                    src={tmdbImg(backdrop, 'original')}
+                    alt=""
+                    onLoad={e => e.currentTarget.classList.add('loaded')}
+                  />
                 )}
+                <div className="shimmer" />
               </div>
-              <p className="hero-desc">{heroMovie.overview}</p>
-              <div className="hero-actions">
-                <button className="btn btn-play">
-                  <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Play
-                </button>
-                <button className="btn btn-ghost" onClick={() => heroMovie && navigate(`/movie/${heroMovie.uuid}`)}>More Info</button>
+              <div className="hero-content">
+                <div className="hero-badge">{isMovie ? 'Featured Film' : 'Featured Series'}</div>
+                <h1 className="hero-title">{title}</h1>
+                <div className="hero-meta">
+                  {year && <span>{year}</span>}
+                  {duration && (
+                    <>
+                      <span>•</span>
+                      <span>{formatDuration(duration)}</span>
+                    </>
+                  )}
+                </div>
+                <p className="hero-desc">{overview}</p>
+                <div className="hero-actions">
+                  <button className="btn btn-play">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    Play
+                  </button>
+                  <button className="btn btn-ghost" onClick={() => navigate(detailPath)}>More Info</button>
+                </div>
               </div>
-            </div>
-          </section>
-        )}
+            </section>
+          );
+        })()}
 
             {/* Continue Watching / Up Next */}
             {upNext.length > 0 && (
               <section className="section">
                 <div className="section-header">
                   <h2 className="section-title">Continue Watching</h2>
-                  <span className="section-link">See all →</span>
                 </div>
                 <div className="media-row">
                   {upNext.map(item => (
