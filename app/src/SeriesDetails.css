@@ -426,13 +426,12 @@
   inset: 0;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   animation: fadeIn 0.15s var(--ease-out) both;
 }
 .ep-file-picker {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   min-width: 340px;
   max-width: 420px;
   width: 90vw;
