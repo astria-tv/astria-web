@@ -1,0 +1,307 @@
+/* ─── ACTIVE STREAMS ─── */
+/* Reuses .admin-page, .admin-header, .admin-error, .admin-empty,
+   .admin-table-wrap, .admin-table, .access-denied from AdminSettings.css */
+
+/* ─── STATS BAR ─── */
+.streams-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  animation: fadeInUp 0.5s var(--ease-out-expo) both;
+  animation-delay: 0.05s;
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 16px 24px;
+  min-width: 120px;
+  text-align: center;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.stat-card:hover {
+  border-color: rgba(0, 207, 200, 0.25);
+  transform: translateY(-1px);
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.stat-refresh {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.4);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.btn-refresh:hover {
+  background: rgba(0, 207, 200, 0.12);
+  color: var(--cyan);
+  border-color: rgba(0, 207, 200, 0.25);
+  transform: rotate(45deg);
+}
+
+.btn-refresh:active {
+  transform: rotate(180deg);
+  transition: transform 0.4s var(--ease-out-expo);
+}
+
+.btn-refresh svg {
+  width: 18px;
+  height: 18px;
+}
+
+.refresh-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* ─── SESSION CARDS ─── */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.session-card {
+  background: var(--bg-surface);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius);
+  overflow: hidden;
+  animation: fadeInUp 0.5s var(--ease-out-expo) both;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.session-card:hover {
+  border-color: rgba(0, 207, 200, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.session-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px;
+  gap: 16px;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.session-file svg {
+  width: 18px;
+  height: 18px;
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+
+.stream-filename {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.session-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.session-meta-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
+}
+
+.session-status {
+  flex-shrink: 0;
+}
+
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.session-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.badge-playing {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.badge-paused {
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+/* ─── STREAM TABLE ─── */
+.stream-table-wrap {
+  border-top: 1px solid rgba(63, 84, 94, 0.2);
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
+
+.stream-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.type-video {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.type-audio {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+}
+
+.type-subtitle {
+  background: rgba(148, 163, 171, 0.12);
+  color: var(--text-dim);
+}
+
+.stream-codec {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+}
+
+/* ─── MODE BADGES ─── */
+.badge-transcoded {
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+.badge-transmuxed {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+/* ─── TRANSCODING STATES ─── */
+.state-running {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.state-throttled {
+  background: rgba(250, 204, 21, 0.12);
+  color: #facc15;
+}
+
+.state-new {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+.state-stopping {
+  background: rgba(255, 85, 85, 0.12);
+  color: #f55;
+}
+
+.state-exited {
+  background: rgba(148, 163, 171, 0.12);
+  color: var(--text-dim);
+}
+
+/* ─── PROGRESS BAR ─── */
+.progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(63, 84, 94, 0.4);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 60px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--teal));
+  border-radius: 3px;
+  transition: width 0.6s var(--ease-out-expo);
+}
+
+.progress-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+  min-width: 32px;
+  text-align: right;
+}

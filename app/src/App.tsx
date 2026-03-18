@@ -7,6 +7,7 @@ import Series from './Series';
 import SeriesDetails from './SeriesDetails';
 import Player from './Player';
 import AdminSettings from './AdminSettings';
+import ActiveStreams from './ActiveStreams';
 import UnmatchedMedia from './UnmatchedMedia';
 import Register from './Register';
 import AppLayout from './AppLayout';
@@ -78,6 +79,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AppLayout><AdminSettings /></AppLayout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/streams"
+          element={
+            <RequireAuth>
+              <AppLayout><ActiveStreams /></AppLayout>
             </RequireAuth>
           }
         />
