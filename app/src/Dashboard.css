@@ -442,6 +442,8 @@
   display: flex;
   gap: 18px;
   overflow-x: auto;
+  padding-top: 10px;
+  margin-top: -10px;
   padding-bottom: 8px;
   scrollbar-width: thin;
   scrollbar-color: var(--bg-card) transparent;
