@@ -242,6 +242,8 @@ export default function SeriesDetails() {
       .then(data => {
         if (data.series.length > 0) {
           const s = data.series[0];
+          s.seasons.sort((a, b) => a.seasonNumber - b.seasonNumber);
+          s.seasons.forEach(sn => sn.episodes.sort((a, b) => a.episodeNumber - b.episodeNumber));
           setSeries(s);
           // Check for season query param, otherwise default to first season with episodes
           const seasonParam = searchParams.get('season');
