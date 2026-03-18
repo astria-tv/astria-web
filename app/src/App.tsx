@@ -6,6 +6,8 @@ import MovieDetails from './MovieDetails';
 import Series from './Series';
 import SeriesDetails from './SeriesDetails';
 import Player from './Player';
+import AdminSettings from './AdminSettings';
+import Register from './Register';
 import AppLayout from './AppLayout';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -21,6 +23,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route
           path="/dashboard"
           element={
@@ -66,6 +69,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Player />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <AppLayout><AdminSettings /></AppLayout>
             </RequireAuth>
           }
         />

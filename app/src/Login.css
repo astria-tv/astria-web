@@ -161,3 +161,19 @@
   font-size: 13px;
   margin-bottom: 20px;
 }
+
+.register-link {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.register-link a {
+  color: var(--cyan);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.register-link a:hover {
+  color: var(--cyan-bright);
+}

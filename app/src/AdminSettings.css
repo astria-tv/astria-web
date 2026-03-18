@@ -1,0 +1,444 @@
+/* ─── ADMIN SETTINGS ─── */
+.admin-page {
+  padding: 80px 60px 60px;
+  animation: fadeInUp 0.6s var(--ease-out-expo) both;
+}
+
+.admin-header {
+  margin-bottom: 40px;
+}
+
+.admin-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin-bottom: 6px;
+}
+
+.admin-header p {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* ─── SECTIONS ─── */
+.admin-section {
+  margin-bottom: 36px;
+  animation: fadeInUp 0.5s var(--ease-out-expo) both;
+}
+
+.admin-section:nth-child(2) { animation-delay: 0.05s; }
+.admin-section:nth-child(3) { animation-delay: 0.1s; }
+.admin-section:nth-child(4) { animation-delay: 0.15s; }
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.admin-section-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.admin-section-desc {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+
+/* ─── CREATE INVITE ─── */
+.invite-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.btn-create {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--bg-deep);
+  background: linear-gradient(135deg, var(--cyan), var(--teal));
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 207, 200, 0.25);
+}
+
+.btn-create:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 207, 200, 0.35);
+}
+
+.btn-create:active {
+  transform: translateY(0);
+}
+
+.btn-create:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-create svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ─── INVITE CODE TOAST ─── */
+.invite-created {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: rgba(0, 207, 200, 0.08);
+  border: 1px solid rgba(0, 207, 200, 0.25);
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+  animation: fadeInScale 0.35s var(--ease-out-expo) both;
+}
+
+.invite-created-label {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.invite-created-code {
+  flex: 1;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cyan);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 14px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  word-break: break-all;
+  user-select: all;
+}
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--cyan);
+  background: rgba(0, 207, 200, 0.12);
+  border: 1px solid rgba(0, 207, 200, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.btn-copy:hover {
+  background: rgba(0, 207, 200, 0.18);
+  border-color: rgba(0, 207, 200, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-copy:active {
+  transform: translateY(0);
+}
+
+.btn-copy.copied {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.btn-copy svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── TABLE ─── */
+.admin-table-wrap {
+  background: var(--bg-surface);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  padding: 14px 20px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(63, 84, 94, 0.3);
+}
+
+.admin-table td {
+  padding: 14px 20px;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(63, 84, 94, 0.15);
+  transition: background 0.2s;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tbody tr {
+  transition: background 0.2s;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(63, 84, 94, 0.15);
+}
+
+.invite-code-cell {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--cyan);
+  letter-spacing: 0.3px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badge-admin {
+  background: rgba(0, 207, 200, 0.15);
+  color: var(--cyan);
+}
+
+.badge-user {
+  background: rgba(148, 163, 171, 0.12);
+  color: var(--text-dim);
+}
+
+.badge-available {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+}
+
+.badge-used {
+  background: rgba(148, 163, 171, 0.12);
+  color: var(--text-dim);
+}
+
+/* ─── EMPTY STATE ─── */
+.admin-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.admin-empty svg {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.admin-empty p {
+  font-size: 14px;
+}
+
+.admin-empty span {
+  font-size: 13px;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+/* ─── ERROR ─── */
+.admin-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 85, 85, 0.08);
+  border: 1px solid rgba(255, 85, 85, 0.2);
+  border-radius: var(--radius-sm);
+  color: #f55;
+  font-size: 14px;
+  margin-bottom: 20px;
+  animation: fadeInScale 0.3s var(--ease-out-expo) both;
+}
+
+.admin-error svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ─── ACCESS DENIED ─── */
+.access-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  animation: fadeInUp 0.6s var(--ease-out-expo) both;
+}
+
+.access-denied svg {
+  width: 56px;
+  height: 56px;
+  color: var(--text-dim);
+  opacity: 0.3;
+  margin-bottom: 20px;
+}
+
+.access-denied h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.access-denied p {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+/* ─── INLINE COPY FOR TABLE ROWS ─── */
+.table-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.table-copy-btn:hover {
+  background: rgba(0, 207, 200, 0.12);
+  color: var(--cyan);
+  border-color: rgba(0, 207, 200, 0.2);
+  transform: translateY(-1px);
+}
+
+.table-copy-btn:active {
+  transform: translateY(0);
+}
+
+.table-copy-btn.copied {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.2);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.table-copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── DELETE USER ─── */
+.btn-delete-user {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.btn-delete-user:hover {
+  background: rgba(255, 85, 85, 0.12);
+  color: #f55;
+  border-color: rgba(255, 85, 85, 0.25);
+  transform: translateY(-1px);
+}
+
+.btn-delete-user:active {
+  transform: translateY(0);
+}
+
+.btn-delete-user svg {
+  width: 14px;
+  height: 14px;
+}
+
+.confirm-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeInScale 0.2s var(--ease-out-expo) both;
+}
+
+.confirm-delete-label {
+  font-size: 13px;
+  color: #f55;
+  font-weight: 500;
+}
+
+.btn-confirm-yes,
+.btn-confirm-no {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-confirm-yes {
+  background: rgba(255, 85, 85, 0.15);
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  color: #f55;
+}
+
+.btn-confirm-yes:hover {
+  background: rgba(255, 85, 85, 0.25);
+}
+
+.btn-confirm-yes:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-confirm-no {
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  color: var(--text-dim);
+}
+
+.btn-confirm-no:hover {
+  background: rgba(63, 84, 94, 0.5);
+}
