@@ -27,6 +27,17 @@ interface LocationState {
   subtitle?: string;
   mediaUuid?: string;
   startTime?: number;
+  episodeUuid?: string;
+}
+
+interface NextEpisodeInfo {
+  name: string;
+  episodeNumber: number;
+  seasonName: string;
+  seriesName: string;
+  fileUuid: string;
+  episodeUuid: string;
+  stillPath: string;
 }
 
 /* ─── GraphQL helper ─── */
@@ -69,6 +80,23 @@ const CREATE_PLAY_STATE = `mutation CreatePlayState($uuid: String!, $finished: B
   createPlayState(uuid: $uuid, finished: $finished, playtime: $playtime) {
     uuid
     playState { finished playtime }
+  }
+}`;
+
+const NEARBY_EPISODES = `query NearbyEpisodes($uuid: String!) {
+  nearbyEpisodes(uuid: $uuid, previousLimit: 0, nextLimit: 1) {
+    next {
+      name
+      episodeNumber
+      uuid
+      stillPath
+      files { uuid }
+      playState { finished playtime }
+      season {
+        name
+        series { name }
+      }
+    }
   }
 }`;
 
@@ -144,6 +172,12 @@ export default function Player() {
 
   // Stream info for settings panel
   const audioStreams = ticket?.streams?.filter(s => s.streamType === 'audio') ?? [];
+
+  // Next episode countdown
+  const [nextEpisode, setNextEpisode] = useState<NextEpisodeInfo | null>(null);
+  const [countdown, setCountdown] = useState(0);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const countdownRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
 
   /* ─── Fetch streaming ticket ─── */
   useEffect(() => {
@@ -323,7 +357,73 @@ export default function Player() {
         playtime: Math.floor(videoRef.current?.duration ?? 0),
       }).catch(() => {});
     }
-  }, [state.mediaUuid]);
+    // If this is an episode, fetch next episode and start countdown
+    if (state.episodeUuid) {
+      gqlFetch<{ nearbyEpisodes: { next: Array<{
+        name: string; episodeNumber: number; uuid: string; stillPath: string;
+        files: Array<{ uuid: string }>;
+        playState: { finished: boolean; playtime: number } | null;
+        season: { name: string; series: { name: string } } | null;
+      }> } }>(NEARBY_EPISODES, { uuid: state.episodeUuid })
+        .then(data => {
+          const next = data.nearbyEpisodes.next[0];
+          if (next && next.files.length > 0) {
+            setNextEpisode({
+              name: next.name,
+              episodeNumber: next.episodeNumber,
+              seasonName: next.season?.name ?? '',
+              seriesName: next.season?.series?.name ?? '',
+              fileUuid: next.files[0].uuid,
+              episodeUuid: next.uuid,
+              stillPath: next.stillPath,
+            });
+            setCountdown(10);
+            setShowCountdown(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [state.mediaUuid, state.episodeUuid]);
+
+  /* ─── Next episode countdown timer ─── */
+  useEffect(() => {
+    if (!showCountdown || !nextEpisode) return;
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current);
+          playNextEpisode();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(countdownRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showCountdown, nextEpisode]);
+
+  function playNextEpisode() {
+    if (!nextEpisode) return;
+    clearInterval(countdownRef.current);
+    setShowCountdown(false);
+    navigate(`/play/${nextEpisode.fileUuid}`, {
+      replace: true,
+      state: {
+        title: nextEpisode.name,
+        subtitle: `${nextEpisode.seriesName} · ${nextEpisode.seasonName} · E${nextEpisode.episodeNumber}`,
+        mediaUuid: nextEpisode.episodeUuid,
+        episodeUuid: nextEpisode.episodeUuid,
+        startTime: 0,
+      },
+    });
+  }
+
+  function cancelCountdown() {
+    clearInterval(countdownRef.current);
+    setShowCountdown(false);
+    setNextEpisode(null);
+    navigate(-1);
+  }
 
   /* ─── Controls visibility ─── */
   const showControls = useCallback(() => {
@@ -756,6 +856,48 @@ export default function Player() {
               ))}
             </>
           )}
+        </div>
+      )}
+
+      {/* Next episode countdown overlay */}
+      {showCountdown && nextEpisode && (
+        <div className="next-episode-overlay">
+          <div className="next-episode-card">
+            {nextEpisode.stillPath && (
+              <img
+                className="next-episode-still"
+                src={nextEpisode.stillPath}
+                alt={nextEpisode.name}
+              />
+            )}
+            <div className="next-episode-info">
+              <span className="next-episode-label">Up Next</span>
+              <h3 className="next-episode-title">{nextEpisode.name}</h3>
+              <p className="next-episode-meta">
+                {nextEpisode.seriesName} · {nextEpisode.seasonName} · E{nextEpisode.episodeNumber}
+              </p>
+            </div>
+          </div>
+          <div className="next-episode-actions">
+            <div className="next-episode-countdown-ring">
+              <svg viewBox="0 0 48 48">
+                <circle className="countdown-track" cx="24" cy="24" r="20" />
+                <circle
+                  className="countdown-progress"
+                  cx="24" cy="24" r="20"
+                  style={{ strokeDashoffset: `${125.6 * (1 - countdown / 10)}` }}
+                />
+              </svg>
+              <span className="countdown-number">{countdown}</span>
+            </div>
+            <button className="next-episode-play" onClick={playNextEpisode}>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+              Play Now
+            </button>
+            <button className="next-episode-cancel" onClick={cancelCountdown}>
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </div>

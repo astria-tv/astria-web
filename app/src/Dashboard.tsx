@@ -192,6 +192,7 @@ interface FilePickerState {
   subtitle: string;
   mediaUuid: string;
   startTime: number;
+  episodeUuid?: string;
   options: FilePickerOption[];
 }
 
@@ -364,9 +365,9 @@ export default function Dashboard() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [filePicker]);
 
-  function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number) {
+  function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number, episodeUuid?: string) {
     navigate(`/play/${fileUuid}`, {
-      state: { title, subtitle, mediaUuid, startTime },
+      state: { title, subtitle, mediaUuid, startTime, episodeUuid },
     });
   }
 
@@ -379,13 +380,14 @@ export default function Dashboard() {
     const subtitle = `${seriesName} · S${s} E${e}`;
 
     if (episode.files.length === 1) {
-      playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime);
+      playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime, episode.uuid);
     } else {
       setFilePicker({
         title: episode.name,
         subtitle,
         mediaUuid: episode.uuid,
         startTime,
+        episodeUuid: episode.uuid,
         options: buildFileOptions(episode.files),
       });
     }
@@ -850,7 +852,7 @@ export default function Dashboard() {
                 key={opt.uuid}
                 className="fp-option"
                 onClick={() => {
-                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime);
+                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid);
                   setFilePicker(null);
                 }}
               >

@@ -36,6 +36,7 @@ interface FilePickerState {
   subtitle: string;
   mediaUuid: string;
   startTime: number;
+  episodeUuid?: string;
   options: FilePickerOption[];
 }
 
@@ -160,9 +161,9 @@ export default function PosterCard({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [filePicker]);
 
-  function playFile(fileUuid: string, playTitle: string, playSub: string, playMediaUuid: string, startTime: number) {
+  function playFile(fileUuid: string, playTitle: string, playSub: string, playMediaUuid: string, startTime: number, episodeUuid?: string) {
     navigate(`/play/${fileUuid}`, {
-      state: { title: playTitle, subtitle: playSub, mediaUuid: playMediaUuid, startTime },
+      state: { title: playTitle, subtitle: playSub, mediaUuid: playMediaUuid, startTime, episodeUuid },
     });
   }
 
@@ -227,13 +228,14 @@ export default function PosterCard({
       const sub = `${seriesData.name} · ${targetSeason.name} · E${targetEp.episodeNumber}`;
 
       if (targetEp.files.length === 1) {
-        playFile(targetEp.files[0].uuid, targetEp.name, sub, targetEp.uuid, startTime);
+        playFile(targetEp.files[0].uuid, targetEp.name, sub, targetEp.uuid, startTime, targetEp.uuid);
       } else {
         setFilePicker({
           title: targetEp.name,
           subtitle: sub,
           mediaUuid: targetEp.uuid,
           startTime,
+          episodeUuid: targetEp.uuid,
           options: buildFileOptions(targetEp.files),
         });
       }
@@ -294,7 +296,7 @@ export default function PosterCard({
                 key={opt.uuid}
                 className="fp-option"
                 onClick={() => {
-                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime);
+                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid);
                   setFilePicker(null);
                 }}
               >

@@ -300,6 +300,7 @@ export default function SeriesDetails() {
           title: ep.name,
           subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}`,
           mediaUuid: ep.uuid,
+          episodeUuid: ep.uuid,
           startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
         },
       });
@@ -317,6 +318,7 @@ export default function SeriesDetails() {
         title: ep.name,
         subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}${res ? ` · ${res}` : ''}`,
         mediaUuid: ep.uuid,
+        episodeUuid: ep.uuid,
         startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
       },
     });
