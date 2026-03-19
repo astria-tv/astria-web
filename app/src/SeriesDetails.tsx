@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './SeriesDetails.css';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -213,7 +213,6 @@ export default function SeriesDetails() {
 
   // Episode file picker state (for episodes with multiple files)
   const [filePickerEp, setFilePickerEp] = useState<Episode | null>(null);
-  const filePickerRef = useRef<HTMLDivElement>(null);
 
   // Admin check
   const isAdmin = useMemo(() => {
@@ -278,18 +277,6 @@ export default function SeriesDetails() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [dropdownOpen]);
-
-  // Close file picker on outside click
-  useEffect(() => {
-    if (!filePickerEp) return;
-    function handleClick(e: MouseEvent) {
-      if (filePickerRef.current && !filePickerRef.current.contains(e.target as Node)) {
-        setFilePickerEp(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [filePickerEp]);
 
   function handleEpisodeClick(ep: Episode) {
     if (ep.files.length === 0) return;
@@ -793,16 +780,11 @@ export default function SeriesDetails() {
       </div>
 
       {/* Episode File Picker (for multi-file episodes) */}
-      {filePickerEp && createPortal(
-        <div className="ep-file-picker-overlay" onClick={() => setFilePickerEp(null)}>
-          <div
-            className="ep-file-picker"
-            ref={filePickerRef}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="ep-file-picker-header">
-              <span className="ep-file-picker-title">Choose Version</span>
-              <span className="ep-file-picker-ep">E{filePickerEp.episodeNumber} · {filePickerEp.name}</span>
+      <Modal open={!!filePickerEp} onClose={() => setFilePickerEp(null)} className="fp-modal">
+        {filePickerEp && (<>
+            <div className="fp-header">
+              <span className="fp-label">Choose Version</span>
+              <span className="fp-title">E{filePickerEp.episodeNumber} · {filePickerEp.name}</span>
             </div>
             {[...filePickerEp.files]
               .sort((a, b) => {
@@ -819,31 +801,28 @@ export default function SeriesDetails() {
                 return (
                   <button
                     key={f.uuid}
-                    className="ep-file-option"
+                    className="fp-option"
                     onClick={() => {
                       playEpisodeFile(filePickerEp, f);
                       setFilePickerEp(null);
                     }}
                   >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="ep-file-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    <span className="ep-file-res">{res}</span>
-                    <span className="ep-file-tags">
-                      {codec && <span className="ep-file-tag">{codec}</span>}
-                      {bitrate && <span className="ep-file-tag">{bitrate}</span>}
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span className="fp-res">{res}</span>
+                    <span className="fp-tags">
+                      {codec && <span className="fp-tag">{codec}</span>}
+                      {bitrate && <span className="fp-tag">{bitrate}</span>}
                     </span>
-                    <span className="ep-file-size">{size}</span>
+                    <span className="fp-size">{size}</span>
                   </button>
                 );
               })}
-          </div>
-        </div>,
-        document.body,
-      )}
+        </>)}
+      </Modal>
 
       {/* Fix Match Modal */}
-      {showFixMatch && series && createPortal(
-        <div className="um-overlay" onClick={closeFixMatch}>
-          <div className="um-panel fm-panel-wide" onClick={e => e.stopPropagation()}>
+      <Modal open={!!(showFixMatch && series)} onClose={closeFixMatch} className="um-panel fm-panel-wide">
+        {showFixMatch && series && (<>
             <div className="um-panel-header">
               <div>
                 <h2>Fix Match</h2>
@@ -1025,10 +1004,8 @@ export default function SeriesDetails() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+        </>)}
+      </Modal>
     </>
   );
 }

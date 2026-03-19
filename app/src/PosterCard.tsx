@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PosterCard.css';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -94,6 +94,20 @@ function buildFileOptions(files: FileInfo[]): FilePickerOption[] {
     });
 }
 
+const MOVIE_FILES_QUERY = `query MovieFiles($uuid: String!) {
+  movies(uuid: $uuid) {
+    title
+    year
+    playState { finished playtime }
+    files {
+      uuid
+      totalDuration
+      fileSize
+      streams { codecName bitRate streamType resolution }
+    }
+  }
+}`;
+
 const SERIES_FIRST_EPISODE_QUERY = `query SeriesFirstEp($uuid: String!) {
   series(uuid: $uuid) {
     name
@@ -148,18 +162,6 @@ export default function PosterCard({
 }: PosterCardProps) {
   const navigate = useNavigate();
   const [filePicker, setFilePicker] = useState<FilePickerState | null>(null);
-  const filePickerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!filePicker) return;
-    function handleClick(e: MouseEvent) {
-      if (filePickerRef.current && !filePickerRef.current.contains(e.target as Node)) {
-        setFilePicker(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [filePicker]);
 
   function playFile(fileUuid: string, playTitle: string, playSub: string, playMediaUuid: string, startTime: number, episodeUuid?: string) {
     navigate(`/play/${fileUuid}`, {
@@ -167,20 +169,44 @@ export default function PosterCard({
     });
   }
 
-  function handleMoviePlay() {
-    if (!files || files.length === 0) return;
-    const startTime = playState?.finished ? 0 : (playState?.playtime ?? 0);
-    const sub = subtitle ?? '';
+  async function handleMoviePlay() {
+    let movieFiles = files;
+    let moviePlayState = playState;
+    let movieTitle = title;
+    let movieSub = subtitle ?? '';
 
-    if (files.length === 1) {
-      playFile(files[0].uuid, title, sub, mediaUuid, startTime);
+    if (!movieFiles || movieFiles.length === 0) {
+      try {
+        const data = await gqlFetch<{
+          movies: Array<{
+            title: string;
+            year: string;
+            playState: PlayState | null;
+            files: FileInfo[];
+          }>;
+        }>(MOVIE_FILES_QUERY, { uuid: mediaUuid });
+        const movie = data.movies?.[0];
+        if (!movie || !movie.files?.length) return;
+        movieFiles = movie.files;
+        moviePlayState = movie.playState;
+        movieTitle = movie.title;
+        movieSub = movie.year ?? movieSub;
+      } catch {
+        return;
+      }
+    }
+
+    const startTime = moviePlayState?.finished ? 0 : (moviePlayState?.playtime ?? 0);
+
+    if (movieFiles.length === 1) {
+      playFile(movieFiles[0].uuid, movieTitle, movieSub, mediaUuid, startTime);
     } else {
       setFilePicker({
-        title,
-        subtitle: sub,
+        title: movieTitle,
+        subtitle: movieSub,
         mediaUuid,
         startTime,
-        options: buildFileOptions(files),
+        options: buildFileOptions(movieFiles),
       });
     }
   }
@@ -247,9 +273,9 @@ export default function PosterCard({
   function handlePlayClick(ev: React.MouseEvent) {
     ev.stopPropagation();
     if (mediaType === 'movie') {
-      handleMoviePlay();
+      void handleMoviePlay();
     } else {
-      handleSeriesPlay();
+      void handleSeriesPlay();
     }
   }
 
@@ -280,41 +306,34 @@ export default function PosterCard({
         {subtitle && <div className="p-year">{subtitle}</div>}
       </div>
 
-      {filePicker && createPortal(
-        <div className="fp-overlay" onClick={() => setFilePicker(null)}>
-          <div
-            className="fp-modal"
-            ref={filePickerRef}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="fp-header">
-              <span className="fp-label">Choose Version</span>
-              <span className="fp-title">{filePicker.subtitle}</span>
-            </div>
-            {filePicker.options.map(opt => (
-              <button
-                key={opt.uuid}
-                className="fp-option"
-                onClick={() => {
-                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid);
-                  setFilePicker(null);
-                }}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-                <span className="fp-res">{opt.resolution}</span>
-                <span className="fp-tags">
-                  {opt.codec && <span className="fp-tag">{opt.codec}</span>}
-                  {opt.bitrate && <span className="fp-tag">{opt.bitrate}</span>}
-                </span>
-                <span className="fp-size">{opt.size}</span>
-              </button>
-            ))}
+      <Modal open={!!filePicker} onClose={() => setFilePicker(null)} className="fp-modal">
+        {filePicker && (<>
+          <div className="fp-header">
+            <span className="fp-label">Choose Version</span>
+            <span className="fp-title">{filePicker.subtitle}</span>
           </div>
-        </div>,
-        document.body,
-      )}
+          {filePicker.options.map(opt => (
+            <button
+              key={opt.uuid}
+              className="fp-option"
+              onClick={() => {
+                playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid);
+                setFilePicker(null);
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+              <span className="fp-res">{opt.resolution}</span>
+              <span className="fp-tags">
+                {opt.codec && <span className="fp-tag">{opt.codec}</span>}
+                {opt.bitrate && <span className="fp-tag">{opt.bitrate}</span>}
+              </span>
+              <span className="fp-size">{opt.size}</span>
+            </button>
+          ))}
+        </>)}
+      </Modal>
     </>
   );
 }

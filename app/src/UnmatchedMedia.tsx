@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import './UnmatchedMedia.css';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface Library {
@@ -456,9 +456,8 @@ export default function UnmatchedMedia() {
       )}
 
       {/* ─── MATCH PANEL OVERLAY ─── */}
-      {matchTarget && createPortal(
-        <div className="um-overlay" onClick={closeMatchPanel}>
-          <div className="um-panel" onClick={e => e.stopPropagation()}>
+      <Modal open={!!matchTarget} onClose={closeMatchPanel} className="um-panel">
+        {matchTarget && (<>
             <div className="um-panel-header">
               <div>
                 <h2>{matchTarget.files && matchTarget.files.length > 1
@@ -593,10 +592,8 @@ export default function UnmatchedMedia() {
                 </div>
               )}
             </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+        </>)}
+      </Modal>
     </div>
   );
 }

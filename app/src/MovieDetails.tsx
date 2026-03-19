@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import './MovieDetails.css';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -633,9 +633,7 @@ export default function MovieDetails() {
       </div>
 
       {/* Fix Match Modal */}
-      {showFixMatch && createPortal(
-        <div className="um-overlay" onClick={closeFixMatch}>
-          <div className="um-panel" onClick={e => e.stopPropagation()}>
+      <Modal open={showFixMatch} onClose={closeFixMatch} className="um-panel">
             <div className="um-panel-header">
               <div>
                 <h2>Fix Match</h2>
@@ -734,10 +732,7 @@ export default function MovieDetails() {
                 </div>
               )}
             </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+      </Modal>
     </>
   );
 }

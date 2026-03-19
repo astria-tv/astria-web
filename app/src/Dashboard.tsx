@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import PosterCard from './PosterCard';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -302,7 +302,6 @@ export default function Dashboard() {
   const [heroItem, setHeroItem] = useState<Movie | Series | null>(null);
   const [filePicker, setFilePicker] = useState<FilePickerState | null>(null);
   const [heroLoading, setHeroLoading] = useState(false);
-  const filePickerRef = useRef<HTMLDivElement>(null);
 
   const isAdmin = (() => {
     const jwt = sessionStorage.getItem('jwt');
@@ -352,18 +351,6 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Close file picker on outside click
-  useEffect(() => {
-    if (!filePicker) return;
-    function handleClick(e: MouseEvent) {
-      if (filePickerRef.current && !filePickerRef.current.contains(e.target as Node)) {
-        setFilePicker(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [filePicker]);
 
   function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number, episodeUuid?: string) {
     navigate(`/play/${fileUuid}`, {
@@ -836,13 +823,8 @@ export default function Dashboard() {
             )}
 
       {/* File Picker Modal */}
-      {filePicker && createPortal(
-        <div className="fp-overlay" onClick={() => setFilePicker(null)}>
-          <div
-            className="fp-modal"
-            ref={filePickerRef}
-            onClick={e => e.stopPropagation()}
-          >
+      <Modal open={!!filePicker} onClose={() => setFilePicker(null)} className="fp-modal">
+          {filePicker && (<>
             <div className="fp-header">
               <span className="fp-label">Choose Version</span>
               <span className="fp-title">{filePicker.subtitle}</span>
@@ -865,10 +847,8 @@ export default function Dashboard() {
                 <span className="fp-size">{opt.size}</span>
               </button>
             ))}
-          </div>
-        </div>,
-        document.body,
-      )}
+          </>)}
+      </Modal>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import './AdminSettings.css';
+import Modal from './Modal';
 
 /* ─── Types ─── */
 interface User {
@@ -420,16 +420,6 @@ export default function AdminSettings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [libBackend]);
 
-  useEffect(() => {
-    if (!showAddModal) return;
-    function handleEsc(e: KeyboardEvent) {
-      if (e.key === 'Escape') closeAddModal();
-    }
-    document.addEventListener('keydown', handleEsc);
-    return () => document.removeEventListener('keydown', handleEsc);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showAddModal]);
-
   /* ── Render ── */
   if (loading) {
     return (
@@ -731,9 +721,7 @@ export default function AdminSettings() {
       )}
 
       {/* ═══════════ ADD LIBRARY MODAL ═══════════ */}
-      {showAddModal && createPortal(
-        <div className="modal-backdrop" onClick={closeAddModal}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+      <Modal open={showAddModal} onClose={closeAddModal} className="admin-modal">
             <div className="modal-header">
               <h2>Add Library</h2>
               <button className="modal-close" onClick={closeAddModal}>
@@ -888,10 +876,7 @@ export default function AdminSettings() {
                 {creatingLib ? 'Creating…' : 'Create Library'}
               </button>
             </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+      </Modal>
     </div>
   );
 }

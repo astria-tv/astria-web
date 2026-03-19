@@ -1,0 +1,24 @@
+/* ─── SHARED MODAL OVERLAY ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease both;
+}
+
+.modal-panel {
+  background: var(--bg-deep);
+  border: 1px solid rgba(63, 84, 94, 0.4);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInScale 0.3s var(--ease-out-expo) both;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
