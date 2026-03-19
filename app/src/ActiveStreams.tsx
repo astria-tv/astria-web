@@ -1,5 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import './ActiveStreams.css';
+import {
+  LockIcon, ErrorCircleIcon, RefreshIcon, MediaPlayIcon,
+  VideoIcon, UserIcon, ClockIcon, PauseOutlineIcon, PlayOutlineIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -187,9 +191,7 @@ export default function ActiveStreams() {
   if (isAdmin === false) {
     return (
       <div className="access-denied">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
+        <LockIcon strokeWidth={1.5} />
         <h2>Access Denied</h2>
         <p>You need administrator privileges to view this page.</p>
       </div>
@@ -207,7 +209,7 @@ export default function ActiveStreams() {
 
       {error && (
         <div className="admin-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+          <ErrorCircleIcon />
           {error}
         </div>
       )}
@@ -228,10 +230,7 @@ export default function ActiveStreams() {
         </div>
         <div className="stat-refresh">
           <button className="btn-refresh" onClick={fetchSessions} title="Refresh now">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-            </svg>
+            <RefreshIcon />
           </button>
           <span className="refresh-label">Updated {lastRefresh.toLocaleTimeString()}</span>
         </div>
@@ -240,10 +239,7 @@ export default function ActiveStreams() {
       {/* ─── Sessions ─── */}
       {sessions.length === 0 ? (
         <div className="admin-empty">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polygon points="10 8 16 12 10 16 10 8" />
-          </svg>
+          <MediaPlayIcon strokeWidth={1.5} />
           <p>No active streams</p>
           <span>Streams will appear here when someone starts watching</span>
         </div>
@@ -254,18 +250,16 @@ export default function ActiveStreams() {
               <div className="session-header">
                 <div className="session-info">
                   <div className="session-file">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-                    </svg>
+                    <VideoIcon />
                     <FileName locator={session.fileLocator} />
                   </div>
                   <div className="session-meta">
                     <span className="session-meta-item">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                      <UserIcon />
                       {userMap[session.userID] ?? `User ${session.userID}`}
                     </span>
                     <span className="session-meta-item">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                      <ClockIcon />
                       {formatProgress(session.progress)}
                     </span>
                   </div>
@@ -273,9 +267,9 @@ export default function ActiveStreams() {
                 <div className="session-status">
                   <span className={`session-badge ${session.paused ? 'badge-paused' : 'badge-playing'}`}>
                     {session.paused ? (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+                      <PauseOutlineIcon />
                     ) : (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                      <PlayOutlineIcon />
                     )}
                     {session.paused ? 'Paused' : 'Playing'}
                   </span>

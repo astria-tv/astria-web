@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 import PosterCard from './PosterCard';
 import Modal from './Modal';
+import {
+  MediaPlayIcon, FilmSimpleIcon, TvIcon, PlayIcon, PlayOutlineIcon,
+  FolderPlusIcon, RefreshCwIcon, SettingsIcon, ClockIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -498,10 +502,7 @@ export default function Dashboard() {
           </div>
           <div className="empty-hero-content">
             <div className="empty-hero-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="2" />
-                <polygon points="10 8 16 12 10 16 10 8" />
-              </svg>
+              <MediaPlayIcon />
             </div>
             <h1 className="empty-hero-title">Welcome to Astria</h1>
             <p className="empty-hero-subtitle">
@@ -515,7 +516,7 @@ export default function Dashboard() {
           <div className="activity-strip">
             <div className="activity-card">
               <div className="activity-icon green">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                <FilmSimpleIcon />
               </div>
               <div className="activity-text">
                 <h4>{stats.movieCount.toLocaleString()}</h4>
@@ -524,7 +525,7 @@ export default function Dashboard() {
             </div>
             <div className="activity-card">
               <div className="activity-icon blue">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                <TvIcon />
               </div>
               <div className="activity-text">
                 <h4>{stats.seriesCount.toLocaleString()}</h4>
@@ -533,7 +534,7 @@ export default function Dashboard() {
             </div>
             <div className="activity-card">
               <div className="activity-icon amber">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <PlayOutlineIcon />
               </div>
               <div className="activity-text">
                 <h4>{stats.episodeCount.toLocaleString()}</h4>
@@ -553,11 +554,7 @@ export default function Dashboard() {
               <div className="empty-step-card">
                 <div className="empty-step-number">1</div>
                 <div className="empty-step-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                    <line x1="12" y1="11" x2="12" y2="17" />
-                    <line x1="9" y1="14" x2="15" y2="14" />
-                  </svg>
+                  <FolderPlusIcon />
                 </div>
                 <h3>Add Media Folders</h3>
                 <p>Point Astria to directories containing your movies and TV shows.</p>
@@ -565,10 +562,7 @@ export default function Dashboard() {
               <div className="empty-step-card">
                 <div className="empty-step-number">2</div>
                 <div className="empty-step-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="23 4 23 10 17 10" />
-                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                  </svg>
+                  <RefreshCwIcon />
                 </div>
                 <h3>Scan &amp; Match</h3>
                 <p>Astria will scan your files and fetch metadata like posters and descriptions.</p>
@@ -576,9 +570,7 @@ export default function Dashboard() {
               <div className="empty-step-card">
                 <div className="empty-step-number">3</div>
                 <div className="empty-step-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
+                  <PlayOutlineIcon />
                 </div>
                 <h3>Start Watching</h3>
                 <p>Browse, search, and stream your entire library from any device.</p>
@@ -586,10 +578,7 @@ export default function Dashboard() {
             </div>
             <div className="empty-cta">
               <button className="btn btn-play" onClick={() => navigate('/admin?tab=libraries')}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
+                <SettingsIcon style={{ width: 18, height: 18 }} />
                 Open Admin Settings
               </button>
             </div>
@@ -601,10 +590,7 @@ export default function Dashboard() {
           <section className="section empty-waiting-section">
             <div className="empty-waiting-card">
               <div className="empty-waiting-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
+                <ClockIcon strokeWidth={1.5} />
               </div>
               <h3>Content is on its way</h3>
               <p>Your admin is setting up the media library. Check back soon!</p>
@@ -657,7 +643,7 @@ export default function Dashboard() {
                 <p className="hero-desc">{overview}</p>
                 <div className="hero-actions">
                   <button className="btn btn-play" onClick={handleHeroPlay} disabled={heroLoading}>
-                    <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <PlayIcon />
                     {heroLoading ? 'Loading…' : 'Play'}
                   </button>
                   <button className="btn btn-ghost" onClick={() => navigate(detailPath)}>More Info</button>
@@ -694,7 +680,7 @@ export default function Dashboard() {
                           <img src={tmdbImg((item as Episode).stillPath)} alt="" className="cw-thumb-img" onLoad={e => e.currentTarget.classList.add('loaded')} />
                         )}
                         <div className="play-overlay" onClick={ev => handleMediaItemPlay(item, ev)}>
-                          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                          <PlayIcon />
                         </div>
                         <div className="cw-progress">
                           <div className="cw-progress-bar" style={{ width: `${progressPercent(item)}%` }} />
@@ -715,7 +701,7 @@ export default function Dashboard() {
               <div className="activity-strip">
                 <div className="activity-card">
                   <div className="activity-icon green">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+                    <FilmSimpleIcon />
                   </div>
                   <div className="activity-text">
                     <h4>{stats.movieCount.toLocaleString()}</h4>
@@ -724,7 +710,7 @@ export default function Dashboard() {
                 </div>
                 <div className="activity-card">
                   <div className="activity-icon blue">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+                    <TvIcon />
                   </div>
                   <div className="activity-text">
                     <h4>{stats.seriesCount.toLocaleString()}</h4>
@@ -733,7 +719,7 @@ export default function Dashboard() {
                 </div>
                 <div className="activity-card">
                   <div className="activity-icon amber">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <PlayOutlineIcon />
                   </div>
                   <div className="activity-text">
                     <h4>{stats.episodeCount.toLocaleString()}</h4>
@@ -838,7 +824,7 @@ export default function Dashboard() {
                   setFilePicker(null);
                 }}
               >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <PlayIcon className="fp-play-icon" />
                 <span className="fp-res">{opt.resolution}</span>
                 <span className="fp-tags">
                   {opt.codec && <span className="fp-tag">{opt.codec}</span>}

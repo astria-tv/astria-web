@@ -1,6 +1,10 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import './UnmatchedMedia.css';
 import Modal from './Modal';
+import {
+  LockIcon, ErrorCircleIcon, FilmSimpleIcon, TvIcon,
+  CheckIcon, SearchIcon, FileIcon, CloseIcon, ImageIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface Library {
@@ -323,9 +327,7 @@ export default function UnmatchedMedia() {
   if (!isAdmin) {
     return (
       <div className="access-denied">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
+        <LockIcon strokeWidth={1.5} />
         <h2>Access Denied</h2>
         <p>You need administrator privileges to view this page.</p>
       </div>
@@ -351,7 +353,7 @@ export default function UnmatchedMedia() {
 
       {error && (
         <div className="admin-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+          <ErrorCircleIcon />
           {error}
         </div>
       )}
@@ -362,7 +364,7 @@ export default function UnmatchedMedia() {
           className={`um-tab${tab === 'movies' ? ' active' : ''}`}
           onClick={() => setTab('movies')}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          <FilmSimpleIcon />
           Movie Files
           {movieFiles.length > 0 && <span className="um-tab-count">{movieFiles.length}</span>}
         </button>
@@ -370,7 +372,7 @@ export default function UnmatchedMedia() {
           className={`um-tab${tab === 'episodes' ? ' active' : ''}`}
           onClick={() => setTab('episodes')}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>
+          <TvIcon />
           Episode Files
           {episodeFiles.length > 0 && <span className="um-tab-count">{episodeFiles.length}</span>}
         </button>
@@ -379,7 +381,7 @@ export default function UnmatchedMedia() {
       {/* ─── FILE LIST ─── */}
       {currentFiles.length === 0 ? (
         <div className="admin-empty" style={{ marginTop: 24 }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+          <CheckIcon strokeWidth={1.5} />
           <p>No unmatched {tab === 'movies' ? 'movie' : 'episode'} files</p>
           <span>All files have been identified</span>
         </div>
@@ -404,7 +406,7 @@ export default function UnmatchedMedia() {
               </label>
               {selectedEpisodeUUIDs.size > 0 && (
                 <button className="um-match-btn" onClick={openMatchPanelForSelected}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <SearchIcon />
                   Match {selectedEpisodeUUIDs.size} selected
                 </button>
               )}
@@ -430,7 +432,7 @@ export default function UnmatchedMedia() {
                   </label>
                 )}
                 <div className="um-file-icon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <FileIcon strokeWidth={1.5} />
               </div>
               <div className="um-file-info">
                 <div className="um-file-name">{file.fileName}</div>
@@ -446,7 +448,7 @@ export default function UnmatchedMedia() {
                 </div>
               </div>
               <button className="um-match-btn" onClick={() => openMatchPanel(tab, file)}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <SearchIcon />
                 Match
               </button>
             </div>
@@ -470,20 +472,20 @@ export default function UnmatchedMedia() {
                 )}
               </div>
               <button className="um-panel-close" onClick={closeMatchPanel}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <CloseIcon />
               </button>
             </div>
 
             {matchError && (
               <div className="admin-error" style={{ margin: '0 0 16px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                <ErrorCircleIcon />
                 {matchError}
               </div>
             )}
 
             {matchSuccess && (
               <div className="um-success">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <CheckIcon />
                 {matchSuccess}
               </div>
             )}
@@ -514,7 +516,7 @@ export default function UnmatchedMedia() {
             <div className="um-search-section">
               <label className="um-label">Search TMDB</label>
               <div className="um-search-input-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <SearchIcon />
                 <input
                   type="text"
                   className="um-search-input"
@@ -542,7 +544,7 @@ export default function UnmatchedMedia() {
                         <img src={tmdbImg(r.posterPath)} alt={r.title} onLoad={e => e.currentTarget.classList.add('loaded')} />
                       ) : (
                         <div className="um-no-poster">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <ImageIcon strokeWidth={1.5} />
                         </div>
                       )}
                     </div>
@@ -569,7 +571,7 @@ export default function UnmatchedMedia() {
                         <img src={tmdbImg(r.posterPath)} alt={r.name} onLoad={e => e.currentTarget.classList.add('loaded')} />
                       ) : (
                         <div className="um-no-poster">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          <ImageIcon strokeWidth={1.5} />
                         </div>
                       )}
                     </div>
@@ -586,7 +588,7 @@ export default function UnmatchedMedia() {
                 ((matchTarget.type === 'movies' && movieResults.length === 0) ||
                  (matchTarget.type === 'episodes' && seriesResults.length === 0)) && (
                 <div className="um-no-results">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <SearchIcon strokeWidth={1.5} />
                   <p>No results found</p>
                   <span>Try a different search term or enter the TMDB ID directly</span>
                 </div>

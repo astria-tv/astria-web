@@ -2,6 +2,12 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Hls from 'hls.js';
 import './Player.css';
+import {
+  PlayIcon, PauseIcon, ChevronLeftIcon, ChevronRightIcon,
+  PipIcon, SkipBackIcon, SkipForwardIcon, SubtitlesIcon,
+  VolumeMuteIcon, VolumeIcon, SettingsIcon, FullscreenIcon,
+  CheckIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -662,16 +668,16 @@ export default function Player() {
       {/* Center play/pause indicator */}
       <div className={`center-indicator${centerIcon ? ' visible' : ''}`}>
         {centerIcon === 'play' ? (
-          <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+          <PlayIcon />
         ) : (
-          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+          <PauseIcon />
         )}
       </div>
 
       {/* Top overlay */}
       <div className="top-overlay">
         <button className="top-btn" title="Back" onClick={handleBack}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+          <ChevronLeftIcon />
         </button>
         <div className="now-playing">
           <h2>{state.title ?? 'Now Playing'}</h2>
@@ -681,7 +687,7 @@ export default function Player() {
           <button className="top-btn" title="Picture in Picture" onClick={() => {
             videoRef.current?.requestPictureInPicture?.().catch(() => {});
           }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="18" rx="2" /><rect x="11" y="11" width="9" height="8" rx="1" /></svg>
+            <PipIcon />
           </button>
         </div>
       </div>
@@ -700,25 +706,19 @@ export default function Player() {
         {/* Controls row */}
         <div className="controls-row">
           <button className="ctrl-btn" title="Rewind 10s" onClick={skipBack}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M1 4v6h6" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-              <text x="12" y="16" textAnchor="middle" fill="currentColor" stroke="none" fontSize="8" fontWeight="700">10</text>
-            </svg>
+            <SkipBackIcon />
           </button>
 
           <button className="ctrl-btn play-pause" title={playing ? 'Pause' : 'Play'} onClick={togglePlay}>
             {playing ? (
-              <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></svg>
+              <PauseIcon />
             ) : (
-              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+              <PlayIcon />
             )}
           </button>
 
           <button className="ctrl-btn" title="Forward 30s" onClick={skipForward}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-              <text x="12" y="16" textAnchor="middle" fill="currentColor" stroke="none" fontSize="8" fontWeight="700">30</text>
-            </svg>
+            <SkipForwardIcon />
           </button>
 
           <span className="time-display">
@@ -740,7 +740,7 @@ export default function Player() {
                 }
               }}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2" /><line x1="6" y1="12" x2="18" y2="12" /><line x1="6" y1="16" x2="14" y2="16" /></svg>
+              <SubtitlesIcon />
             </button>
           )}
 
@@ -748,9 +748,9 @@ export default function Player() {
           <div className="volume-group">
             <button className="ctrl-btn" title="Volume" onClick={toggleMute}>
               {muted || volume === 0 ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></svg>
+                <VolumeMuteIcon />
               ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /></svg>
+                <VolumeIcon />
               )}
             </button>
             <div className="volume-slider">
@@ -760,12 +760,12 @@ export default function Player() {
 
           {/* Settings */}
           <button className="ctrl-btn" title="Settings" onClick={() => { setShowSettings(s => !s); setSettingsView('main'); }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+            <SettingsIcon />
           </button>
 
           {/* Fullscreen */}
           <button className="ctrl-btn" title="Fullscreen" onClick={toggleFullscreen}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" /><line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" /></svg>
+            <FullscreenIcon />
           </button>
         </div>
       </div>
@@ -777,7 +777,7 @@ export default function Player() {
             <>
               <div className="sp-item" onClick={() => setSettingsView('quality')}>
                 <span className="sp-label">Quality</span>
-                <span className="sp-value">{currentQualityLabel} <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg></span>
+                <span className="sp-value">{currentQualityLabel} <ChevronRightIcon width={14} height={14} /></span>
               </div>
               {audioLabel && (
                 <div className="sp-item">
@@ -788,13 +788,13 @@ export default function Player() {
               {subtitleTracks.length > 0 && (
                 <div className="sp-item" onClick={() => setSettingsView('subtitles')}>
                   <span className="sp-label">Subtitles</span>
-                  <span className="sp-value">{currentSubtitleLabel} <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg></span>
+                  <span className="sp-value">{currentSubtitleLabel} <ChevronRightIcon width={14} height={14} /></span>
                 </div>
               )}
               <div className="sp-divider" />
               <div className="sp-item" onClick={() => setSettingsView('speed')}>
                 <span className="sp-label">Playback Speed</span>
-                <span className="sp-value">{playbackSpeed === 1 ? 'Normal' : `${playbackSpeed}x`} <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg></span>
+                <span className="sp-value">{playbackSpeed === 1 ? 'Normal' : `${playbackSpeed}x`} <ChevronRightIcon width={14} height={14} /></span>
               </div>
             </>
           )}
@@ -802,19 +802,19 @@ export default function Player() {
           {settingsView === 'quality' && (
             <>
               <div className="sp-header" onClick={() => setSettingsView('main')}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+                <ChevronLeftIcon width={16} height={16} />
                 <span>Quality</span>
               </div>
               <div className="sp-divider" />
               <div className={`sp-option${selectedQuality === -1 ? ' active' : ''}`} onClick={() => switchQuality(-1)}>
                 <span>Auto</span>
-                {selectedQuality === -1 && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>}
+                {selectedQuality === -1 && <CheckIcon width={16} height={16} />}
               </div>
               {qualityLevels.map(level => (
                 <div key={level.index} className={`sp-option${selectedQuality === level.index ? ' active' : ''}`} onClick={() => switchQuality(level.index)}>
                   <span>{level.label}</span>
                   <span className="sp-bitrate">{(level.bitrate / 1_000_000).toFixed(1)} Mbps</span>
-                  {selectedQuality === level.index && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>}
+                  {selectedQuality === level.index && <CheckIcon width={16} height={16} />}
                 </div>
               ))}
             </>
@@ -823,19 +823,19 @@ export default function Player() {
           {settingsView === 'subtitles' && (
             <>
               <div className="sp-header" onClick={() => setSettingsView('main')}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+                <ChevronLeftIcon width={16} height={16} />
                 <span>Subtitles</span>
               </div>
               <div className="sp-divider" />
               <div className={`sp-option${selectedSubtitle === -1 ? ' active' : ''}`} onClick={() => switchSubtitle(-1)}>
                 <span>Off</span>
-                {selectedSubtitle === -1 && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>}
+                {selectedSubtitle === -1 && <CheckIcon width={16} height={16} />}
               </div>
               {subtitleTracks.map(track => (
                 <div key={track.index} className={`sp-option${selectedSubtitle === track.index ? ' active' : ''}`} onClick={() => switchSubtitle(track.index)}>
                   <span>{track.name}</span>
                   {track.lang && <span className="sp-lang">{track.lang.toUpperCase()}</span>}
-                  {selectedSubtitle === track.index && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>}
+                  {selectedSubtitle === track.index && <CheckIcon width={16} height={16} />}
                 </div>
               ))}
             </>
@@ -844,14 +844,14 @@ export default function Player() {
           {settingsView === 'speed' && (
             <>
               <div className="sp-header" onClick={() => setSettingsView('main')}>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+                <ChevronLeftIcon width={16} height={16} />
                 <span>Playback Speed</span>
               </div>
               <div className="sp-divider" />
               {speedOptions.map(s => (
                 <div key={s} className={`sp-option${playbackSpeed === s ? ' active' : ''}`} onClick={() => changeSpeed(s)}>
                   <span>{s === 1 ? 'Normal' : `${s}x`}</span>
-                  {playbackSpeed === s && <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>}
+                  {playbackSpeed === s && <CheckIcon width={16} height={16} />}
                 </div>
               ))}
             </>
@@ -891,7 +891,7 @@ export default function Player() {
               <span className="countdown-number">{countdown}</span>
             </div>
             <button className="next-episode-play" onClick={playNextEpisode}>
-              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+              <PlayIcon width={18} height={18} />
               Play Now
             </button>
             <button className="next-episode-cancel" onClick={cancelCountdown}>

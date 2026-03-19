@@ -2,6 +2,11 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './MovieDetails.css';
 import Modal from './Modal';
+import {
+  CheckIcon, MoreVerticalIcon, SearchIcon, PlayIcon,
+  ChevronDownIcon, InfoIcon, MonitorIcon, CloseIcon,
+  ErrorCircleIcon, ImageIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -452,7 +457,7 @@ export default function MovieDetails() {
               disabled={toggling}
               title={movie.playState?.finished ? 'Mark as unwatched' : 'Mark as watched'}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+              <CheckIcon />
               {toggling ? 'Updating…' : movie.playState?.finished ? 'Watched' : 'Mark Watched'}
             </button>
             {isAdmin && (
@@ -462,12 +467,12 @@ export default function MovieDetails() {
                   onClick={() => setDropdownOpen(o => !o)}
                   title="More options"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                  <MoreVerticalIcon width={14} height={14} />
                 </button>
                 {dropdownOpen && (
                   <div className="admin-dropdown-menu">
                     <button className="admin-dropdown-item" onClick={openFixMatch}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <SearchIcon />
                       Fix Match
                     </button>
                   </div>
@@ -497,7 +502,7 @@ export default function MovieDetails() {
                   });
                 }
               }}>
-                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <PlayIcon />
                 {progress > 0 ? 'Resume' : 'Play'}
                 {hasMultipleFiles && resolutionLabel && (
                   <span className="play-btn-res">{resolutionLabel}</span>
@@ -509,7 +514,7 @@ export default function MovieDetails() {
                   onClick={() => setShowVersionPicker(v => !v)}
                   title="Choose version"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7 10l5 5 5-5z"/></svg>
+                  <ChevronDownIcon width={14} height={14} />
                 </button>
               )}
               {showVersionPicker && (
@@ -540,13 +545,13 @@ export default function MovieDetails() {
                         </div>
                         <span className="version-size">{size}</span>
                         {isSelected && (
-                          <svg className="version-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                          <CheckIcon className="version-check" />
                         )}
                       </button>
                     );
                   })}
                   <div className="version-picker-hint">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <InfoIcon />
                     {sortedFiles.length} versions available
                   </div>
                 </div>
@@ -571,7 +576,7 @@ export default function MovieDetails() {
 
           {hasMultipleFiles && (
             <div className="versions-summary">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <MonitorIcon />
               <span>{sortedFiles.length} versions available:</span>
               <div className="versions-chips">
                 {sortedFiles.map((f, i) => {
@@ -640,20 +645,20 @@ export default function MovieDetails() {
                 <p className="um-panel-filename">{movie.title} ({movie.year})</p>
               </div>
               <button className="um-panel-close" onClick={closeFixMatch}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <CloseIcon />
               </button>
             </div>
 
             {fixError && (
               <div className="admin-error" style={{ margin: '0 24px 16px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                <ErrorCircleIcon />
                 {fixError}
               </div>
             )}
 
             {fixSuccess && (
               <div className="um-success" style={{ margin: '0 24px 16px' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                <CheckIcon />
                 {fixSuccess}
               </div>
             )}
@@ -684,7 +689,7 @@ export default function MovieDetails() {
             <div className="um-search-section">
               <label className="um-label">Search TMDB</label>
               <div className="um-search-input-wrap">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <SearchIcon />
                 <input
                   type="text"
                   className="um-search-input"
@@ -711,7 +716,7 @@ export default function MovieDetails() {
                       <img src={tmdbImg(r.posterPath, 'w300')} alt={r.title} onLoad={e => e.currentTarget.classList.add('loaded')} />
                     ) : (
                       <div className="um-no-poster">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <ImageIcon strokeWidth={1.5} />
                       </div>
                     )}
                   </div>
@@ -726,7 +731,7 @@ export default function MovieDetails() {
 
               {!fixSearching && fixSearchQuery.trim() && fixMovieResults.length === 0 && (
                 <div className="um-no-results">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <SearchIcon strokeWidth={1.5} />
                   <p>No results found</p>
                   <span>Try a different search term or enter the TMDB ID directly</span>
                 </div>

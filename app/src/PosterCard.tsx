@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './PosterCard.css';
 import Modal from './Modal';
+import { PlayIcon } from './Icons';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -297,9 +298,7 @@ export default function PosterCard({
           )}
           {badge && <span className="badge-new">{badge}</span>}
           <div className="play-overlay" onClick={handlePlayClick}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <polygon points="5 3 19 12 5 21 5 3" />
-            </svg>
+            <PlayIcon />
           </div>
         </div>
         <div className="p-title">{title}</div>
@@ -321,9 +320,7 @@ export default function PosterCard({
                 setFilePicker(null);
               }}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="fp-play-icon">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
+              <PlayIcon className="fp-play-icon" />
               <span className="fp-res">{opt.resolution}</span>
               <span className="fp-tags">
                 {opt.codec && <span className="fp-tag">{opt.codec}</span>}

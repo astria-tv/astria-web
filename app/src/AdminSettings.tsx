@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './AdminSettings.css';
 import Modal from './Modal';
+import {
+  LockIcon, UsersIcon, FolderIcon, ErrorCircleIcon, PlusIcon,
+  CheckIcon, CopyIcon, UserPlusIcon, TrashIcon, CloseIcon,
+  FilmIcon, TvIcon, FilmSimpleIcon, CloudIcon, SearchIcon,
+  ChevronRightIcon, RefreshIcon,
+} from './Icons';
 
 /* ─── Types ─── */
 interface User {
@@ -432,9 +438,7 @@ export default function AdminSettings() {
   if (isAdmin === false) {
     return (
       <div className="access-denied">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
+        <LockIcon />
         <h2>Access Denied</h2>
         <p>You need administrator privileges to view this page.</p>
       </div>
@@ -456,21 +460,21 @@ export default function AdminSettings() {
           className={`admin-tab${activeTab === 'users' ? ' active' : ''}`}
           onClick={() => setActiveTab('users')}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          <UsersIcon />
           Users & Invites
         </button>
         <button
           className={`admin-tab${activeTab === 'libraries' ? ' active' : ''}`}
           onClick={() => setActiveTab('libraries')}
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+          <FolderIcon />
           Libraries
         </button>
       </div>
 
       {error && (
         <div className="admin-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+          <ErrorCircleIcon />
           {error}
         </div>
       )}
@@ -488,7 +492,7 @@ export default function AdminSettings() {
             </p>
             <div className="invite-actions">
               <button className="btn-create" onClick={handleCreateInvite} disabled={creating}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                <PlusIcon />
                 {creating ? 'Generating…' : 'Generate Invite Code'}
               </button>
             </div>
@@ -503,12 +507,12 @@ export default function AdminSettings() {
                 >
                   {copied === newCode ? (
                     <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                      <CheckIcon />
                       Copied
                     </>
                   ) : (
                     <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                      <CopyIcon />
                       Copy
                     </>
                   )}
@@ -520,7 +524,7 @@ export default function AdminSettings() {
             <div className="admin-table-wrap">
               {availableInvites.length === 0 ? (
                 <div className="admin-empty">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+                  <UserPlusIcon />
                   <p>No invites yet</p>
                   <span>Generate an invite code to get started</span>
                 </div>
@@ -543,9 +547,9 @@ export default function AdminSettings() {
                             title="Copy invite code"
                           >
                             {copied === invite.code ? (
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                              <CheckIcon />
                             ) : (
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                              <CopyIcon />
                             )}
                           </button>
                         </td>
@@ -568,7 +572,7 @@ export default function AdminSettings() {
             <div className="admin-table-wrap">
               {users.length === 0 ? (
                 <div className="admin-empty">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                  <UsersIcon strokeWidth={1.5} />
                   <p>No users found</p>
                 </div>
               ) : (
@@ -614,7 +618,7 @@ export default function AdminSettings() {
                                 onClick={() => setConfirmDeleteId(user.id)}
                                 title={`Delete ${user.username}`}
                               >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                                <TrashIcon />
                               </button>
                             )
                           )}
@@ -635,7 +639,7 @@ export default function AdminSettings() {
           <div className="admin-section-header">
             <h2>Media Libraries</h2>
             <button className="btn-create" onClick={openAddModal}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+              <PlusIcon />
               Add Library
             </button>
           </div>
@@ -646,7 +650,7 @@ export default function AdminSettings() {
           {libraries.length === 0 ? (
             <div className="admin-table-wrap">
               <div className="admin-empty">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                <FolderIcon strokeWidth={1.5} />
                 <p>No libraries configured</p>
                 <span>Add a library to start scanning your media</span>
               </div>
@@ -658,9 +662,9 @@ export default function AdminSettings() {
                   <div className="lib-card-header">
                     <div className="lib-card-icon">
                       {lib.kind === 0 ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /><line x1="2" y1="7" x2="7" y2="7" /><line x1="2" y1="17" x2="7" y2="17" /><line x1="17" y1="7" x2="22" y2="7" /><line x1="17" y1="17" x2="22" y2="17" /></svg>
+                        <FilmIcon strokeWidth={1.5} />
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><polyline points="17 2 12 7 7 2" /></svg>
+                        <TvIcon strokeWidth={1.5} />
                       )}
                     </div>
                     <div className="lib-card-info">
@@ -692,7 +696,7 @@ export default function AdminSettings() {
                         disabled={rescanningLibId === lib.id || lib.isRefreshing}
                         title="Rescan library"
                       >
-                        <svg className={lib.isRefreshing || rescanningLibId === lib.id ? 'spinning' : ''} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
+                        <RefreshIcon className={lib.isRefreshing || rescanningLibId === lib.id ? 'spinning' : ''} />
                       </button>
                       {confirmDeleteLibId === lib.id ? (
                         <span className="confirm-delete">
@@ -708,7 +712,7 @@ export default function AdminSettings() {
                           onClick={() => setConfirmDeleteLibId(lib.id)}
                           title="Delete library"
                         >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
+                          <TrashIcon />
                         </button>
                       )}
                     </div>
@@ -725,7 +729,7 @@ export default function AdminSettings() {
             <div className="modal-header">
               <h2>Add Library</h2>
               <button className="modal-close" onClick={closeAddModal}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                <CloseIcon />
               </button>
             </div>
 
@@ -748,11 +752,11 @@ export default function AdminSettings() {
                 <label className="form-label">Content Type</label>
                 <div className="toggle-group">
                   <button className={`toggle-btn${libKind === 0 ? ' active' : ''}`} onClick={() => setLibKind(0)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" /><line x1="7" y1="2" x2="7" y2="22" /><line x1="17" y1="2" x2="17" y2="22" /><line x1="2" y1="12" x2="22" y2="12" /></svg>
+                    <FilmSimpleIcon strokeWidth={1.5} />
                     Movies
                   </button>
                   <button className={`toggle-btn${libKind === 1 ? ' active' : ''}`} onClick={() => setLibKind(1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="20" height="15" rx="2" ry="2" /><polyline points="17 2 12 7 7 2" /></svg>
+                    <TvIcon strokeWidth={1.5} />
                     Series
                   </button>
                 </div>
@@ -763,11 +767,11 @@ export default function AdminSettings() {
                 <label className="form-label">Source</label>
                 <div className="toggle-group">
                   <button className={`toggle-btn${libBackend === 0 ? ' active' : ''}`} onClick={() => setLibBackend(0)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                    <FolderIcon strokeWidth={1.5} />
                     Local Filesystem
                   </button>
                   <button className={`toggle-btn${libBackend === 1 ? ' active' : ''}`} onClick={() => setLibBackend(1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" /></svg>
+                    <CloudIcon strokeWidth={1.5} />
                     Rclone Remote
                   </button>
                 </div>
@@ -817,7 +821,7 @@ export default function AdminSettings() {
                     disabled={libBackend === 1 && !libRcloneName}
                     title="Browse folders on server"
                   >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    <SearchIcon />
                     Browse
                   </button>
                 </div>
@@ -850,16 +854,16 @@ export default function AdminSettings() {
                     ) : (
                       browserFolders.map(folder => (
                         <button key={folder} className="browser-folder" onClick={() => navigateToFolder(folder)}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
+                          <FolderIcon strokeWidth={1.5} />
                           <span className="browser-folder-name">{folder}</span>
-                          <svg className="browser-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
+                          <ChevronRightIcon className="browser-chevron" />
                         </button>
                       ))
                     )}
                   </div>
 
                   <button className="btn-select-folder" onClick={selectCurrentFolder}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                    <CheckIcon />
                     Use This Folder
                   </button>
                 </div>
