@@ -115,6 +115,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isAdmin]);
 
+  // Clear search when navigating to a different route
+  useEffect(() => {
+    setSearchQuery('');
+    setSearchResults(null);
+  }, [location.pathname]);
+
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults(null);
@@ -178,8 +184,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <main className="main">
         {/* Topbar */}
         <div className="topbar">
-          {showBack ? (
-            <button className="back-btn" onClick={() => navigate(-1)}>
+          {showBack || searchResults !== null ? (
+            <button className="back-btn" onClick={() => {
+              if (searchResults !== null) {
+                setSearchQuery('');
+                setSearchResults(null);
+              } else {
+                navigate(-1);
+              }
+            }}>
               <ChevronLeftIcon />
             </button>
           ) : (
