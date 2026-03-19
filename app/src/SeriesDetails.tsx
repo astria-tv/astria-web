@@ -2,10 +2,11 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import './SeriesDetails.css';
 import Modal from './Modal';
+import MediaInfoPanel from './MediaInfoPanel';
 import {
   CheckIcon, MoreVerticalIcon, SearchIcon, PlayIcon,
   MediaPlayIcon, MonitorIcon, CloseIcon, ErrorCircleIcon,
-  ImageIcon,
+  ImageIcon, InfoIcon,
 } from './Icons';
 
 /* ─── Types ─── */
@@ -218,6 +219,9 @@ export default function SeriesDetails() {
 
   // Episode file picker state (for episodes with multiple files)
   const [filePickerEp, setFilePickerEp] = useState<Episode | null>(null);
+
+  // Episode media info modal state
+  const [mediaInfoEp, setMediaInfoEp] = useState<Episode | null>(null);
 
   // Admin check
   const isAdmin = useMemo(() => {
@@ -754,6 +758,13 @@ export default function SeriesDetails() {
                                 </span>
                               )}
                               <button
+                                className="btn-episode-info"
+                                onClick={(e) => { e.stopPropagation(); setMediaInfoEp(ep); }}
+                                title="Media info"
+                              >
+                                <InfoIcon />
+                              </button>
+                              <button
                                 className={`btn-episode-toggle${isWatched ? ' active' : ''}`}
                                 onClick={(e) => toggleEpisodeWatched(ep, e)}
                                 disabled={togglingEpisodes.has(ep.uuid)}
@@ -1007,6 +1018,21 @@ export default function SeriesDetails() {
               </div>
             </div>
         </>)}
+      </Modal>
+
+      {/* Episode Media Info Modal */}
+      <Modal open={!!mediaInfoEp} onClose={() => setMediaInfoEp(null)} className="media-info-modal">
+        {mediaInfoEp && (
+          <>
+            <div className="media-info-modal-header">
+              <h3>E{mediaInfoEp.episodeNumber} · {mediaInfoEp.name}</h3>
+              <button className="media-info-modal-close" onClick={() => setMediaInfoEp(null)}>
+                <CloseIcon />
+              </button>
+            </div>
+            <MediaInfoPanel files={mediaInfoEp.files} />
+          </>
+        )}
       </Modal>
     </>
   );

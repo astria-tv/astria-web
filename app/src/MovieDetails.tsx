@@ -4,9 +4,10 @@ import './MovieDetails.css';
 import Modal from './Modal';
 import {
   CheckIcon, MoreVerticalIcon, SearchIcon, PlayIcon,
-  ChevronDownIcon, InfoIcon, MonitorIcon, CloseIcon,
+  ChevronDownIcon, InfoIcon, CloseIcon,
   ErrorCircleIcon, ImageIcon,
 } from './Icons';
+import MediaInfoPanel from './MediaInfoPanel';
 
 /* ─── Types ─── */
 interface PlayState {
@@ -387,23 +388,9 @@ export default function MovieDetails() {
 
   // Extract stream info
   const videoStream = file?.streams?.find(s => s.streamType === 'video');
-  const audioStreams = file?.streams?.filter(s => s.streamType === 'audio') ?? [];
-  const subtitleStreams = file?.streams?.filter(s => s.streamType === 'subtitle') ?? [];
 
   const resolutionLabel = videoStream?.resolution ?? null;
   const videoCodec = videoStream?.codecName?.toUpperCase() ?? null;
-  const audioSummary = audioStreams.length > 0
-    ? audioStreams.map(a => {
-        const parts: string[] = [];
-        if (a.language) parts.push(a.language.toUpperCase());
-        if (a.codecName) parts.push(a.codecName.toUpperCase());
-        if (a.title) parts.push(a.title);
-        return parts.join(' · ') || a.codecName || 'Unknown';
-      }).join(', ')
-    : null;
-  const subtitleSummary = subtitleStreams.length > 0
-    ? subtitleStreams.map(s => s.language?.toUpperCase() || s.title || 'Unknown').join(', ')
-    : null;
 
   return (
     <>
@@ -574,66 +561,7 @@ export default function MovieDetails() {
             <p>{movie.overview || 'No synopsis available.'}</p>
           </div>
 
-          {hasMultipleFiles && (
-            <div className="versions-summary">
-              <MonitorIcon />
-              <span>{sortedFiles.length} versions available:</span>
-              <div className="versions-chips">
-                {sortedFiles.map((f, i) => {
-                  const vs = f.streams?.find(s => s.streamType === 'video');
-                  const res = vs?.resolution ?? 'Unknown';
-                  return (
-                    <button
-                      key={f.uuid}
-                      className={`version-chip${i === selectedFileIdx ? ' active' : ''}`}
-                      onClick={() => setSelectedFileIdx(i)}
-                    >
-                      {res}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="info-grid">
-            {resolutionLabel && (
-              <div className="info-item">
-                <label>Resolution</label>
-                <span>{resolutionLabel}</span>
-              </div>
-            )}
-            {videoCodec && (
-              <div className="info-item">
-                <label>Video Codec</label>
-                <span>{videoCodec}{videoStream?.profile ? ` (${videoStream.profile})` : ''}</span>
-              </div>
-            )}
-            {audioSummary && (
-              <div className="info-item">
-                <label>Audio</label>
-                <span>{audioSummary}</span>
-              </div>
-            )}
-            {subtitleSummary && (
-              <div className="info-item">
-                <label>Subtitles</label>
-                <span>{subtitleSummary}</span>
-              </div>
-            )}
-            {file && (
-              <div className="info-item">
-                <label>File Size</label>
-                <span>{formatFileSize(file.fileSize)}</span>
-              </div>
-            )}
-            {file?.fileName && (
-              <div className="info-item">
-                <label>File Name</label>
-                <span>{file.fileName}</span>
-              </div>
-            )}
-          </div>
+          <MediaInfoPanel files={sortedFiles} />
         </div>
       </div>
 
