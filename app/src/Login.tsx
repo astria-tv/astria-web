@@ -39,7 +39,7 @@ export default function Login() {
     <div className="login-page">
       <div className="login-container">
         <div className="logo-area">
-          <img src="/logo.svg" alt="Astria" onLoad={e => e.currentTarget.classList.add('loaded')} />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Astria" onLoad={e => e.currentTarget.classList.add('loaded')} />
           <p>Your personal media universe</p>
         </div>
 

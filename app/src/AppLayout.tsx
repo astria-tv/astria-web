@@ -108,6 +108,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return payload?.admin === true;
   }, []);
 
+  const userInitials = useMemo(() => {
+    const jwt = sessionStorage.getItem('jwt');
+    if (!jwt) return '?';
+    const payload = parseJwt(jwt);
+    const name = (payload?.username ?? payload?.sub ?? '') as string;
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+  }, []);
+
   useEffect(() => {
     if (!isAdmin) return;
     fetchSessionCount().then(setActiveStreamCount);
@@ -149,7 +161,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <div className="dashboard">
       {/* ─── SIDEBAR ─── */}
       <aside className="sidebar">
-        <img className="logo" src="/logo-square.svg" alt="Astria" onLoad={e => e.currentTarget.classList.add('loaded')} />
+        <img className="logo" src={`${import.meta.env.BASE_URL}logo-square.svg`} alt="Astria" onLoad={e => e.currentTarget.classList.add('loaded')} />
         <nav>
           <button className={`nav-btn${location.pathname === '/dashboard' ? ' active' : ''}`} title="Home" onClick={() => navigate('/dashboard')}>
             <HomeIcon />
@@ -177,7 +189,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </button>
           )}
         </nav>
-        <div className="avatar" onClick={handleLogout} title="Sign out">CK</div>
+        <div className="avatar" title="User">{userInitials}</div>
       </aside>
 
       {/* ─── MAIN CONTENT ─── */}

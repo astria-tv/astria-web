@@ -104,11 +104,6 @@
   font-weight: 600;
   color: var(--bg-deep);
   margin-top: auto;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.avatar:hover {
-  transform: scale(1.1);
 }
 
 /* ─── MAIN ─── */

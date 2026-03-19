@@ -42,7 +42,7 @@ function RedirectIfSetup({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/olaris/app">
       <Routes>
         <Route path="/" element={<RedirectIfSetup><Login /></RedirectIfSetup>} />
         <Route path="/setup" element={<Setup />} />
