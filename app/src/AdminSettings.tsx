@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import './AdminSettings.css';
 
@@ -730,7 +731,7 @@ export default function AdminSettings() {
       )}
 
       {/* ═══════════ ADD LIBRARY MODAL ═══════════ */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div className="modal-backdrop" onClick={closeAddModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
@@ -888,7 +889,8 @@ export default function AdminSettings() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
