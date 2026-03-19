@@ -281,7 +281,7 @@
   gap: 10px;
 }
 
-.progress-bar {
+.stream-card .progress-bar {
   flex: 1;
   height: 6px;
   background: rgba(63, 84, 94, 0.4);

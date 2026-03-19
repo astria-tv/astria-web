@@ -107,6 +107,12 @@ const NEARBY_EPISODES = `query NearbyEpisodes($uuid: String!) {
 }`;
 
 /* ─── Helpers ─── */
+function tmdbImg(path: string, size = 'w500'): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00';
   const h = Math.floor(seconds / 3600);
@@ -866,8 +872,9 @@ export default function Player() {
             {nextEpisode.stillPath && (
               <img
                 className="next-episode-still"
-                src={nextEpisode.stillPath}
+                src={tmdbImg(nextEpisode.stillPath, 'w300')}
                 alt={nextEpisode.name}
+                onLoad={e => e.currentTarget.classList.add('loaded')}
               />
             )}
             <div className="next-episode-info">
