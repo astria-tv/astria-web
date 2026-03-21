@@ -505,3 +505,22 @@ export function FilmStripIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function CastIcon(props: IconProps) {
+  return (
+    <svg {...defaultStrokeLight} {...props}>
+      <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" />
+      <line x1="2" y1="20" x2="2.01" y2="20" />
+    </svg>
+  );
+}
+
+export function CastConnectedIcon(props: IconProps) {
+  return (
+    <svg {...defaultStrokeLight} {...props}>
+      <path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6" />
+      <line x1="2" y1="20" x2="2.01" y2="20" />
+      <rect x="9" y="10" width="11" height="8" rx="1" fill="currentColor" fillOpacity="0.25" />
+    </svg>
+  );
+}

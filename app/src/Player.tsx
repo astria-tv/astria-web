@@ -6,8 +6,9 @@ import {
   PlayIcon, PauseIcon, ChevronLeftIcon, ChevronRightIcon,
   PipIcon, SkipBackIcon, SkipForwardIcon, SubtitlesIcon,
   VolumeMuteIcon, VolumeIcon, SettingsIcon, FullscreenIcon,
-  CheckIcon,
+  CheckIcon, CastIcon, CastConnectedIcon,
 } from './Icons';
+import { useChromecast } from './useChromecast';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -191,6 +192,14 @@ export default function Player() {
   const [showCountdown, setShowCountdown] = useState(false);
   const countdownRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
 
+  // Chromecast
+  const {
+    castState, castCurrentTime, castDuration, castPlaying,
+    requestSession, endSession, loadMedia,
+    castPlay, castPause, castSeek,
+  } = useChromecast();
+  const isCasting = castState === 'connected';
+
   /* ─── Fetch streaming ticket ─── */
   useEffect(() => {
     if (!fileUuid) return;
@@ -303,24 +312,58 @@ export default function Player() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket]);
 
-  /* ─── Save play state periodically ─── */
+  /* ─── Auto-load media to Chromecast when session connects ─── */
+  useEffect(() => {
+    if (!isCasting || !ticket) return;
+    // Pause local playback
+    const video = videoRef.current;
+    if (video && !video.paused) video.pause();
+
+    // Build absolute URL for the cast device
+    const codecParams = getPlayableCodecsParams();
+    const separator = ticket.hlsStreamingPath.includes('?') ? '&' : '?';
+    const streamUrl = codecParams
+      ? `${window.location.origin}${ticket.hlsStreamingPath}${separator}${codecParams}`
+      : `${window.location.origin}${ticket.hlsStreamingPath}`;
+
+    loadMedia({
+      contentUrl: streamUrl,
+      jwt: ticket.jwt,
+      title: state.title ?? 'Now Playing',
+      subtitle: state.subtitle,
+      startTime: video ? video.currentTime : (state.startTime ?? 0),
+    });
+  }, [isCasting, ticket]);
+
+  /* ─── Save play state periodically (local + cast) ─── */
   useEffect(() => {
     if (!state.mediaUuid) return;
     const mediaUuid = state.mediaUuid;
 
     saveTimerRef.current = setInterval(() => {
-      const video = videoRef.current;
-      if (!video || video.paused || !isFinite(video.currentTime)) return;
-      const finished = video.duration > 0 && (video.duration - video.currentTime) < 30;
-      gqlFetch(CREATE_PLAY_STATE, {
-        uuid: mediaUuid,
-        finished,
-        playtime: Math.floor(video.currentTime),
-      }).catch(() => {});
+      if (isCasting) {
+        // Save cast playback position
+        if (!castPlaying || !isFinite(castCurrentTime)) return;
+        const finished = castDuration > 0 && (castDuration - castCurrentTime) < 30;
+        gqlFetch(CREATE_PLAY_STATE, {
+          uuid: mediaUuid,
+          finished,
+          playtime: Math.floor(castCurrentTime),
+        }).catch(() => {});
+      } else {
+        const video = videoRef.current;
+        if (!video || video.paused || !isFinite(video.currentTime)) return;
+        const finished = video.duration > 0 && (video.duration - video.currentTime) < 30;
+        gqlFetch(CREATE_PLAY_STATE, {
+          uuid: mediaUuid,
+          finished,
+          playtime: Math.floor(video.currentTime),
+        }).catch(() => {});
+      }
     }, 10000);
 
     return () => clearInterval(saveTimerRef.current);
-  }, [state.mediaUuid]);
+  }, [state.mediaUuid, isCasting, castPlaying, castCurrentTime, castDuration]);
 
   /* ─── Save state on unmount ─── */
   useEffect(() => {
@@ -519,6 +562,17 @@ export default function Player() {
 
   /* ─── Actions ─── */
   function togglePlay() {
+    if (isCasting) {
+      if (castPlaying) {
+        castPause();
+        flashCenter('pause');
+      } else {
+        castPlay();
+        flashCenter('play');
+      }
+      showControls();
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) {
@@ -537,6 +591,13 @@ export default function Player() {
   }
 
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    if (isCasting) {
+      if (!castDuration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      castSeek(pct * castDuration);
+      return;
+    }
     const video = videoRef.current;
     if (!video || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -563,6 +624,11 @@ export default function Player() {
   }
 
   function skipBack() {
+    if (isCasting) {
+      castSeek(Math.max(0, castCurrentTime - 10));
+      showControls();
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     video.currentTime = Math.max(0, video.currentTime - 10);
@@ -570,6 +636,11 @@ export default function Player() {
   }
 
   function skipForward() {
+    if (isCasting) {
+      castSeek(Math.min(castDuration || Infinity, castCurrentTime + 30));
+      showControls();
+      return;
+    }
     const video = videoRef.current;
     if (!video) return;
     video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 30);
@@ -620,9 +691,26 @@ export default function Player() {
     setSettingsView('main');
   }
 
+  function handleCastButton() {
+    if (castState === 'connected') {
+      // Resume local playback from where cast left off
+      const video = videoRef.current;
+      if (video && isFinite(castCurrentTime) && castCurrentTime > 0) {
+        video.currentTime = castCurrentTime;
+      }
+      endSession();
+      if (video) video.play().catch(() => {});
+    } else {
+      requestSession();
+    }
+  }
+
   /* ─── Derived values ─── */
-  const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const bufferPct = duration > 0 ? (buffered / duration) * 100 : 0;
+  const activeTime = isCasting ? castCurrentTime : currentTime;
+  const activeDuration = isCasting ? castDuration : duration;
+  const isPlaying = isCasting ? castPlaying : playing;
+  const progressPct = activeDuration > 0 ? (activeTime / activeDuration) * 100 : 0;
+  const bufferPct = isCasting ? 100 : (duration > 0 ? (buffered / duration) * 100 : 0);
 
   const currentQualityLabel = selectedQuality === -1
     ? 'Auto'
@@ -671,6 +759,15 @@ export default function Player() {
         </div>
       )}
 
+      {/* Casting overlay */}
+      {isCasting && (
+        <div className="cast-overlay">
+          <CastConnectedIcon width={48} height={48} />
+          <p className="cast-label">Casting to TV</p>
+          <p className="cast-title">{state.title ?? 'Now Playing'}</p>
+        </div>
+      )}
+
       {/* Center play/pause indicator */}
       <div className={`center-indicator${centerIcon ? ' visible' : ''}`}>
         {centerIcon === 'play' ? (
@@ -690,11 +787,22 @@ export default function Player() {
           {state.subtitle && <p>{state.subtitle}</p>}
         </div>
         <div className="top-actions">
-          <button className="top-btn" title="Picture in Picture" onClick={() => {
-            videoRef.current?.requestPictureInPicture?.().catch(() => {});
-          }}>
-            <PipIcon />
-          </button>
+          {castState !== 'unavailable' && (
+            <button
+              className={`top-btn${isCasting ? ' cast-active' : ''}`}
+              title={isCasting ? 'Stop Casting' : 'Cast'}
+              onClick={handleCastButton}
+            >
+              {isCasting ? <CastConnectedIcon /> : <CastIcon />}
+            </button>
+          )}
+          {!isCasting && (
+            <button className="top-btn" title="Picture in Picture" onClick={() => {
+              videoRef.current?.requestPictureInPicture?.().catch(() => {});
+            }}>
+              <PipIcon />
+            </button>
+          )}
         </div>
       </div>
 
@@ -715,8 +823,8 @@ export default function Player() {
             <SkipBackIcon />
           </button>
 
-          <button className="ctrl-btn play-pause" title={playing ? 'Pause' : 'Play'} onClick={togglePlay}>
-            {playing ? (
+          <button className="ctrl-btn play-pause" title={isPlaying ? 'Pause' : 'Play'} onClick={togglePlay}>
+            {isPlaying ? (
               <PauseIcon />
             ) : (
               <PlayIcon />
@@ -728,7 +836,7 @@ export default function Player() {
           </button>
 
           <span className="time-display">
-            <span className="current">{formatTime(currentTime)}</span> / {formatTime(duration)}
+            <span className="current">{formatTime(activeTime)}</span> / {formatTime(activeDuration)}
           </span>
 
           <span className="spacer" />
@@ -768,6 +876,17 @@ export default function Player() {
           <button className="ctrl-btn" title="Settings" onClick={() => { setShowSettings(s => !s); setSettingsView('main'); }}>
             <SettingsIcon />
           </button>
+
+          {/* Cast */}
+          {castState !== 'unavailable' && (
+            <button
+              className={`ctrl-btn${isCasting ? ' cast-active' : ''}`}
+              title={isCasting ? 'Stop Casting' : 'Cast'}
+              onClick={handleCastButton}
+            >
+              {isCasting ? <CastConnectedIcon /> : <CastIcon />}
+            </button>
+          )}
 
           {/* Fullscreen */}
           <button className="ctrl-btn" title="Fullscreen" onClick={toggleFullscreen}>
