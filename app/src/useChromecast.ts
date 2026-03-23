@@ -122,10 +122,8 @@ declare namespace chrome {
 export type CastState = 'unavailable' | 'available' | 'connecting' | 'connected';
 
 export interface CastMediaInfo {
-  /** Full URL to the HLS manifest */
+  /** Full URL to the HLS manifest (JWT should be embedded as a query param) */
   contentUrl: string;
-  /** JWT token for authorization (sent as customData) */
-  jwt: string;
   /** Title shown on the cast device */
   title: string;
   /** Subtitle (e.g. series · season · episode) */
@@ -244,9 +242,7 @@ export function useChromecast() {
         info.contentUrl,
         'application/x-mpegURL',
       );
-      mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.FMP4;
       mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-      mediaInfo.customData = { jwt: info.jwt };
 
       const metadata = new chrome.cast.media.GenericMediaMetadata();
       metadata.title = info.title;

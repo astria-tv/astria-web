@@ -319,16 +319,14 @@ export default function Player() {
     const video = videoRef.current;
     if (video && !video.paused) video.pause();
 
-    // Build absolute URL for the cast device
-    const codecParams = getPlayableCodecsParams();
+    // Build absolute URL for the cast device — embed JWT as query param
+    // since the Default Media Receiver cannot send custom headers.
+    // Don't send browser codec params; the Chromecast has its own codec support.
     const separator = ticket.hlsStreamingPath.includes('?') ? '&' : '?';
-    const streamUrl = codecParams
-      ? `${window.location.origin}${ticket.hlsStreamingPath}${separator}${codecParams}`
-      : `${window.location.origin}${ticket.hlsStreamingPath}`;
+    const streamUrl = `${window.location.origin}${ticket.hlsStreamingPath}${separator}jwt=${encodeURIComponent(ticket.jwt)}`;
 
     loadMedia({
       contentUrl: streamUrl,
-      jwt: ticket.jwt,
       title: state.title ?? 'Now Playing',
       subtitle: state.subtitle,
       startTime: video ? video.currentTime : (state.startTime ?? 0),
