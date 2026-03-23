@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getJwt, handleAuthFailure } from './auth';
 import './PosterCard.css';
 import Modal from './Modal';
 import { PlayIcon } from './Icons';
@@ -132,7 +133,7 @@ const SERIES_FIRST_EPISODE_QUERY = `query SeriesFirstEp($uuid: String!) {
 }`;
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -141,6 +142,7 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getJwt, parseJwt, handleAuthFailure } from './auth';
 import './Dashboard.css';
 import PosterCard from './PosterCard';
 import Modal from './Modal';
@@ -268,7 +269,7 @@ function cwSub(item: MediaItem): string {
 }
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -277,21 +278,11 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
-}
-
-function parseJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
 }
 
 /* ─── Component ─── */
@@ -308,7 +299,7 @@ export default function Dashboard() {
   const [heroLoading, setHeroLoading] = useState(false);
 
   const isAdmin = (() => {
-    const jwt = sessionStorage.getItem('jwt');
+    const jwt = getJwt();
     if (!jwt) return false;
     const payload = parseJwt(jwt);
     return payload?.admin === true;

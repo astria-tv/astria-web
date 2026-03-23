@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { setJwt } from './auth';
 import './Login.css';
 
 export default function Login() {
@@ -7,6 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const navigate = useNavigate();
 
   async function handleSubmit(e: FormEvent) {
@@ -26,7 +28,7 @@ export default function Login() {
       }
 
       const data = await res.json();
-      sessionStorage.setItem('jwt', data.jwt);
+      setJwt(data.jwt, rememberMe);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
@@ -77,7 +79,7 @@ export default function Login() {
 
             <div className="options-row">
               <label>
-                <input type="checkbox" defaultChecked /> Remember me
+                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} /> Remember me
               </label>
             </div>
 

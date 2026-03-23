@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { getJwt, clearAuth, parseJwt, handleAuthFailure } from './auth';
 import PosterCard from './PosterCard';
 import {
   HomeIcon, FilmIcon, TvIcon, FilePlusIcon, StreamIcon, SettingsIcon,
@@ -50,7 +51,7 @@ function tmdbImg(path: string, size = 'w500'): string {
 }
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -59,27 +60,17 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
 }
 
-function parseJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-}
-
 const SESSIONS_COUNT_QUERY = `{ sessions { sessionID } }`;
 
 async function fetchSessionCount(): Promise<number> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/s/query', {
     method: 'POST',
     headers: {
@@ -88,6 +79,7 @@ async function fetchSessionCount(): Promise<number> {
     },
     body: JSON.stringify({ query: SESSIONS_COUNT_QUERY }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) return 0;
   const json = await res.json();
   return json.data?.sessions?.length ?? 0;
@@ -102,14 +94,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const showBack = location.pathname !== '/dashboard';
 
   const isAdmin = useMemo(() => {
-    const jwt = sessionStorage.getItem('jwt');
+    const jwt = getJwt();
     if (!jwt) return false;
     const payload = parseJwt(jwt);
     return payload?.admin === true;
   }, []);
 
   const userInitials = useMemo(() => {
-    const jwt = sessionStorage.getItem('jwt');
+    const jwt = getJwt();
     if (!jwt) return '?';
     const payload = parseJwt(jwt);
     const name = (payload?.username ?? payload?.sub ?? '') as string;
@@ -153,7 +145,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, [searchQuery]);
 
   function handleLogout() {
-    sessionStorage.removeItem('jwt');
+    clearAuth();
     navigate('/', { replace: true });
   }
 

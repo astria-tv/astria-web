@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import './Movies.css';
+import { getJwt, handleAuthFailure } from './auth';
 import PosterCard from './PosterCard';
 import { SearchIcon, SortIcon, TvIcon } from './Icons';
 
@@ -43,7 +44,7 @@ function buildPageQuery(sort: SortOption, sortDirection: SortDir, offset: number
 }
 
 async function gqlFetch<T>(query: string): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -52,6 +53,7 @@ async function gqlFetch<T>(query: string): Promise<T> {
     },
     body: JSON.stringify({ query }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);

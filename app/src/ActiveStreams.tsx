@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { getJwt, parseJwt, handleAuthFailure } from './auth';
 import './ActiveStreams.css';
 import {
   LockIcon, ErrorCircleIcon, RefreshIcon, MediaPlayIcon,
@@ -64,7 +65,7 @@ const SESSIONS_QUERY = `{
 }`;
 
 async function gqlFetch<T>(endpoint: string, query: string): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -73,25 +74,15 @@ async function gqlFetch<T>(endpoint: string, query: string): Promise<T> {
     },
     body: JSON.stringify({ query }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
 }
 
-function parseJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-}
-
 function isCurrentUserAdmin(): boolean {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   if (!jwt) return false;
   const payload = parseJwt(jwt);
   if (!payload) return false;

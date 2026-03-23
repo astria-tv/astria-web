@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { getJwt, parseJwt, handleAuthFailure } from './auth';
 import './UnmatchedMedia.css';
 import Modal from './Modal';
 import {
@@ -89,7 +90,7 @@ const UPDATE_EPISODE_FILE = `mutation ($input: UpdateEpisodeFileMetadataInput!) 
 }`;
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -98,21 +99,11 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
   return json.data as T;
-}
-
-function parseJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
 }
 
 function tmdbImg(path: string, size = 'w300'): string {
@@ -160,7 +151,7 @@ export default function UnmatchedMedia() {
   const [selectedEpisodeUUIDs, setSelectedEpisodeUUIDs] = useState<Set<string>>(new Set());
 
   const isAdmin = useMemo(() => {
-    const jwt = sessionStorage.getItem('jwt');
+    const jwt = getJwt();
     if (!jwt) return false;
     const payload = parseJwt(jwt);
     return payload?.admin === true;

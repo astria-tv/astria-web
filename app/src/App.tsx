@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { getJwt } from './auth';
 import Login from './Login';
 import Dashboard from './Dashboard';
 import Movies from './Movies';
@@ -15,7 +16,7 @@ import Setup from './Setup';
 import AppLayout from './AppLayout';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   if (!jwt) {
     return <Navigate to="/" replace />;
   }

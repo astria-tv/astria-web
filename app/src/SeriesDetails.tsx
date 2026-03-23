@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { getJwt, parseJwt, handleAuthFailure } from './auth';
 import './SeriesDetails.css';
 import Modal from './Modal';
 import MediaInfoPanel from './MediaInfoPanel';
@@ -170,17 +171,6 @@ function formatDuration(seconds: number): string {
   return `${m}m`;
 }
 
-function parseJwt(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(payload));
-  } catch {
-    return null;
-  }
-}
-
 function episodeProgress(ep: Episode): number {
   if (!ep.playState || ep.playState.finished) return 0;
   const duration = ep.files?.[0]?.totalDuration ?? 0;
@@ -189,7 +179,7 @@ function episodeProgress(ep: Episode): number {
 }
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
-  const jwt = sessionStorage.getItem('jwt');
+  const jwt = getJwt();
   const res = await fetch('/olaris/m/query', {
     method: 'POST',
     headers: {
@@ -198,6 +188,7 @@ async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): 
     },
     body: JSON.stringify({ query, variables }),
   });
+  if (res.status === 401) { handleAuthFailure(); throw new Error('Unauthorized'); }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.errors?.length) throw new Error(json.errors[0].message);
@@ -225,7 +216,7 @@ export default function SeriesDetails() {
 
   // Admin check
   const isAdmin = useMemo(() => {
-    const jwt = sessionStorage.getItem('jwt');
+    const jwt = getJwt();
     if (!jwt) return false;
     const payload = parseJwt(jwt);
     return payload?.admin === true;
