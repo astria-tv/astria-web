@@ -686,6 +686,12 @@
   color: var(--text);
   opacity: 0.5;
 }
+.cast-overlay .cast-error {
+  font-size: 13px;
+  color: #ff6b6b;
+  margin-top: 8px;
+  opacity: 0.9;
+}
 
 @keyframes castPulse {
   0%, 100% { opacity: 0.4; transform: scale(1); }

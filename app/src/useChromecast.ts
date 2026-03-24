@@ -140,6 +140,7 @@ export function useChromecast() {
   const [castCurrentTime, setCastCurrentTime] = useState(0);
   const [castDuration, setCastDuration] = useState(0);
   const [castPlaying, setCastPlaying] = useState(false);
+  const [castError, setCastError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 
@@ -243,6 +244,7 @@ export function useChromecast() {
         'application/x-mpegURL',
       );
       mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+      mediaInfo.hlsSegmentFormat = chrome.cast.media.HlsSegmentFormat.FMP4;
 
       const metadata = new chrome.cast.media.GenericMediaMetadata();
       metadata.title = info.title;
@@ -265,10 +267,15 @@ export function useChromecast() {
       const castSession = cast.framework.CastContext.getInstance().getCurrentSession() as unknown as {
         loadMedia(req: chrome.cast.media.LoadRequest): Promise<void>;
       };
+      setCastError(null);
       castSession.loadMedia(loadRequest).then(() => {
         startPolling();
         setCastPlaying(true);
-      }).catch(() => {});
+      }).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err ?? 'Cast media load failed');
+        console.error('[Chromecast] Failed to load media:', message);
+        setCastError(message);
+      });
     },
     [],
   );
@@ -313,6 +320,7 @@ export function useChromecast() {
     castCurrentTime,
     castDuration,
     castPlaying,
+    castError,
     requestSession,
     endSession,
     loadMedia,

@@ -198,7 +198,7 @@ export default function Player() {
   // Chromecast
   const {
     castState, castCurrentTime, castDuration, castPlaying,
-    requestSession, endSession, loadMedia,
+    castError, requestSession, endSession, loadMedia,
     castPlay, castPause, castSeek,
   } = useChromecast();
   const isCasting = castState === 'connected';
@@ -782,6 +782,7 @@ export default function Player() {
           <CastConnectedIcon width={48} height={48} />
           <p className="cast-label">Casting to TV</p>
           <p className="cast-title">{state.title ?? 'Now Playing'}</p>
+          {castError && <p className="cast-error">{castError}</p>}
         </div>
       )}
 
