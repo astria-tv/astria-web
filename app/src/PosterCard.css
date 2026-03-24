@@ -166,3 +166,47 @@
   color: var(--text-dim);
   flex-shrink: 0;
 }
+
+/* ─── WATCHED INDICATOR ─── */
+.watched-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 207, 200, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  opacity: 0.8;
+  transition: opacity 0.2s var(--ease-out);
+}
+.poster-card:hover .watched-badge {
+  opacity: 0;
+}
+.watched-badge svg {
+  color: var(--bg-deep);
+  stroke-width: 3;
+}
+
+/* ─── PROGRESS BAR ─── */
+.poster-progress-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 2;
+  border-radius: 0 0 var(--radius) var(--radius);
+  overflow: hidden;
+}
+.poster-progress-fill {
+  height: 100%;
+  background: var(--cyan);
+  border-radius: 0 0 0 var(--radius);
+  transition: width 0.3s var(--ease-out);
+}

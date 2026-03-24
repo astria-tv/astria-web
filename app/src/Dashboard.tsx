@@ -743,6 +743,10 @@ export default function Dashboard() {
                         files={item.files}
                         playState={item.playState}
                         mediaUuid={item.uuid}
+                        watched={item.playState?.finished}
+                        progress={(!item.playState?.finished && item.playState?.playtime && item.files?.[0]?.totalDuration)
+                          ? item.playState.playtime / item.files[0].totalDuration
+                          : undefined}
                       />
                     );
                   })}
@@ -769,6 +773,10 @@ export default function Dashboard() {
                       files={movie.files}
                       playState={movie.playState}
                       mediaUuid={movie.uuid}
+                      watched={movie.playState?.finished}
+                      progress={(!movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration)
+                        ? movie.playState.playtime / movie.files[0].totalDuration
+                        : undefined}
                     />
                   ))}
                 </div>
@@ -793,6 +801,7 @@ export default function Dashboard() {
                       detailPath={`/series/${s.uuid}`}
                       mediaType="series"
                       mediaUuid={s.uuid}
+                      watched={s.unwatchedEpisodesCount === 0}
                     />
                   ))}
                 </div>

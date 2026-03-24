@@ -255,6 +255,10 @@ export default function Movies() {
                 files={movie.files}
                 playState={movie.playState}
                 mediaUuid={movie.uuid}
+                watched={movie.playState?.finished}
+                progress={(!movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration)
+                  ? movie.playState.playtime / movie.files[0].totalDuration
+                  : undefined}
               />
             ))}
           </div>

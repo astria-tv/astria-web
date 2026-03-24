@@ -10,6 +10,7 @@ interface SeriesItem {
   firstAirDate: string;
   posterPath: string;
   uuid: string;
+  unwatchedEpisodesCount: number;
 }
 
 type SortOption = 'name' | 'firstAirDate';
@@ -39,6 +40,7 @@ function buildPageQuery(sort: SortOption, sortDirection: SortDir, offset: number
       firstAirDate
       posterPath
       uuid
+      unwatchedEpisodesCount
     }
   }`;
 }
@@ -242,6 +244,7 @@ export default function Series() {
                 detailPath={`/series/${show.uuid}`}
                 mediaType="series"
                 mediaUuid={show.uuid}
+                watched={show.unwatchedEpisodesCount === 0}
               />
             ))}
           </div>

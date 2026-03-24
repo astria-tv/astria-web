@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getJwt, handleAuthFailure } from './auth';
 import './PosterCard.css';
 import Modal from './Modal';
-import { PlayIcon } from './Icons';
+import { PlayIcon, CheckIcon } from './Icons';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -63,6 +63,10 @@ export interface PosterCardProps {
   mediaUuid: string;
   /** Series uuid (only for mediaType='series') */
   seriesUuid?: string;
+  /** Whether the item has been fully watched */
+  watched?: boolean;
+  /** Progress fraction (0–1) for partially-watched items */
+  progress?: number;
   /** Optional callback fired before navigation (e.g. to clear search) */
   onNavigate?: () => void;
 }
@@ -161,6 +165,8 @@ export default function PosterCard({
   playState,
   mediaUuid,
   seriesUuid,
+  watched,
+  progress,
   onNavigate,
 }: PosterCardProps) {
   const navigate = useNavigate();
@@ -299,6 +305,16 @@ export default function PosterCard({
             />
           )}
           {badge && <span className="badge-new">{badge}</span>}
+          {watched && (
+            <span className="watched-badge">
+              <CheckIcon width={12} height={12} />
+            </span>
+          )}
+          {!watched && progress != null && progress > 0 && (
+            <div className="poster-progress-bar">
+              <div className="poster-progress-fill" style={{ width: `${Math.min(progress * 100, 100)}%` }} />
+            </div>
+          )}
           <div className="play-overlay" onClick={handlePlayClick}>
             <PlayIcon />
           </div>
