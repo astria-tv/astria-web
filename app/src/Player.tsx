@@ -173,6 +173,7 @@ export default function Player() {
   const [muted, setMuted] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const showSettingsRef = useRef(false);
   const [settingsView, setSettingsView] = useState<'main' | 'quality' | 'speed' | 'subtitles'>('main');
   const [centerIcon, setCenterIcon] = useState<'play' | 'pause' | null>(null);
 
@@ -484,13 +485,23 @@ export default function Player() {
   const showControls = useCallback(() => {
     setControlsVisible(true);
     clearTimeout(hideTimerRef.current);
+    if (showSettingsRef.current) return; // Keep controls up while settings are open
     hideTimerRef.current = setTimeout(() => {
       if (videoRef.current && !videoRef.current.paused) {
         setControlsVisible(false);
-        setShowSettings(false);
       }
     }, 3000);
   }, []);
+
+  // Sync ref and restart hide timer when settings close
+  useEffect(() => {
+    showSettingsRef.current = showSettings;
+    if (!showSettings) {
+      showControls();
+    } else {
+      clearTimeout(hideTimerRef.current);
+    }
+  }, [showSettings, showControls]);
 
   useEffect(() => {
     showControls();
@@ -731,6 +742,12 @@ export default function Player() {
       onClick={(e) => {
         // Only toggle play when clicking the video area, not controls
         if ((e.target as HTMLElement).closest('.top-overlay, .bottom-controls, .settings-panel')) return;
+        // If settings are open, close them instead of toggling play
+        if (showSettings) {
+          setShowSettings(false);
+          setSettingsView('main');
+          return;
+        }
         togglePlay();
       }}
     >
