@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getJwt, parseJwt, handleAuthFailure } from './auth';
+import './DetailPage.css';
 import './SeriesDetails.css';
 import Modal from './Modal';
 import MediaInfoPanel from './MediaInfoPanel';
@@ -62,6 +63,17 @@ interface Season {
   unwatchedEpisodesCount: number;
 }
 
+interface Person {
+  name: string;
+  profilePath: string;
+  tmdbID: number;
+}
+
+interface CastRole {
+  person: Person;
+  character: string;
+}
+
 interface Series {
   name: string;
   originalName: string;
@@ -75,6 +87,7 @@ interface Series {
   uuid: string;
   unwatchedEpisodesCount: number;
   onWatchlist: boolean;
+  cast: CastRole[];
 }
 
 interface TmdbSeriesResult {
@@ -99,6 +112,10 @@ const SERIES_DETAIL_QUERY = `query SeriesDetail($uuid: String!) {
     uuid
     unwatchedEpisodesCount
     onWatchlist
+    cast {
+      character
+      person { name profilePath tmdbID }
+    }
     seasons {
       name
       overview
@@ -696,6 +713,33 @@ export default function SeriesDetails() {
             <h3>Synopsis</h3>
             <p>{series.overview || 'No synopsis available.'}</p>
           </div>
+
+          {series.cast.length > 0 && (
+            <div className="cast-section">
+              <h3>Cast</h3>
+              <div className="cast-scroll">
+                {series.cast.map(role => (
+                  <div className="cast-card" key={`${role.person.tmdbID}-${role.character}`}>
+                    <div className="cast-avatar">
+                      {role.person.profilePath ? (
+                        <img
+                          src={role.person.profilePath}
+                          alt={role.person.name}
+                          onLoad={e => e.currentTarget.classList.add('loaded')}
+                        />
+                      ) : (
+                        <div className="cast-avatar-placeholder">
+                          {role.person.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="cast-name">{role.person.name}</span>
+                    <span className="cast-character">{role.character}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Season Tabs */}
           {series.seasons.length > 0 && (

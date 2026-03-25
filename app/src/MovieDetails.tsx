@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getJwt, parseJwt, handleAuthFailure } from './auth';
+import './DetailPage.css';
 import './MovieDetails.css';
 import Modal from './Modal';
 import {
@@ -38,6 +39,17 @@ interface MovieFile {
   streams: Stream[];
 }
 
+interface Person {
+  name: string;
+  profilePath: string;
+  tmdbID: number;
+}
+
+interface CastRole {
+  person: Person;
+  character: string;
+}
+
 interface Movie {
   title: string;
   original_title: string;
@@ -52,6 +64,7 @@ interface Movie {
   files: MovieFile[];
   playState: PlayState | null;
   onWatchlist: boolean;
+  cast: CastRole[];
 }
 
 interface TmdbMovieResult {
@@ -108,6 +121,10 @@ const MOVIE_DETAIL_QUERY = `query MovieDetail($uuid: String!) {
     uuid
     onWatchlist
     playState { finished playtime }
+    cast {
+      character
+      person { name profilePath tmdbID }
+    }
     files {
       fileName
       filePath
@@ -588,6 +605,33 @@ export default function MovieDetails() {
             <h3>Synopsis</h3>
             <p>{movie.overview || 'No synopsis available.'}</p>
           </div>
+
+          {movie.cast.length > 0 && (
+            <div className="cast-section">
+              <h3>Cast</h3>
+              <div className="cast-scroll">
+                {movie.cast.map(role => (
+                  <div className="cast-card" key={`${role.person.tmdbID}-${role.character}`}>
+                    <div className="cast-avatar">
+                      {role.person.profilePath ? (
+                        <img
+                          src={role.person.profilePath}
+                          alt={role.person.name}
+                          onLoad={e => e.currentTarget.classList.add('loaded')}
+                        />
+                      ) : (
+                        <div className="cast-avatar-placeholder">
+                          {role.person.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="cast-name">{role.person.name}</span>
+                    <span className="cast-character">{role.character}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <MediaInfoPanel files={sortedFiles} />
         </div>

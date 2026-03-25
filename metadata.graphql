@@ -233,6 +233,8 @@ type Series {
     uuid: String!
     unwatchedEpisodesCount: Int!
     onWatchlist: Boolean!
+    # Cast roles for this series
+    cast: [CastRole]!
 }
 
 enum SeriesSort {
@@ -334,6 +336,8 @@ type Movie {
     files: [MovieFile]!
     playState: PlayState
     onWatchlist: Boolean!
+    # Cast roles for this movie
+    cast: [CastRole]!
 }
 
 enum MovieSort {
@@ -467,4 +471,30 @@ type EpisodeAddedEvent {
 
 type EpisodeDeletedEvent {
     episodeUUID: String!
+}
+
+# A person (actor, director, etc.) from TMDB
+type Person {
+    # Full name
+    name: String!
+    # TMDB person ID
+    tmdbID: Int!
+    # Profile image URL served through the image cache
+    profilePath: String!
+    # Biographical text
+    biography: String!
+    # Date of birth (YYYY-MM-DD or empty)
+    birthday: String!
+    # Date of death (YYYY-MM-DD or empty)
+    deathday: String!
+    # Place of birth
+    placeOfBirth: String!
+}
+
+# A cast role linking a person to a movie or series
+type CastRole {
+    # The person who played this role
+    person: Person!
+    # Character name played in this movie or series
+    character: String!
 }
