@@ -322,11 +322,15 @@ export default function Player() {
     const video = videoRef.current;
     if (video && !video.paused) video.pause();
 
-    // Build absolute URL for the cast device — embed JWT as query param
-    // since the Default Media Receiver cannot send custom headers.
-    // Don't send browser codec params; the Chromecast has its own codec support.
+    // Build absolute URL for the cast device.
+    // The JWT is already inherently embedded in the hlsStreamingPath.
+    // Send playable codecs so the server transcodes audio if necessary.
+    const codecParams = getPlayableCodecsParams();
     const separator = ticket.hlsStreamingPath.includes('?') ? '&' : '?';
-    const streamUrl = `${window.location.origin}${ticket.hlsStreamingPath}${separator}jwt=${encodeURIComponent(ticket.jwt)}`;
+    let streamUrl = `${window.location.origin}${ticket.hlsStreamingPath}`;
+    if (codecParams) {
+      streamUrl += `${separator}${codecParams}`;
+    }
 
     loadMedia({
       contentUrl: streamUrl,
