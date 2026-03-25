@@ -30,6 +30,10 @@
   transition: all 0.25s var(--ease-out);
   white-space: nowrap;
 }
+.btn-series-toggle + .btn-series-toggle,
+.btn-series-toggle + .admin-dropdown {
+  margin-left: 0;
+}
 .btn-series-toggle:hover {
   color: var(--text);
   background: rgba(63, 84, 94, 0.5);

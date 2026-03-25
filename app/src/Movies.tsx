@@ -26,6 +26,7 @@ interface Movie {
   uuid: string;
   playState: { finished: boolean; playtime: number } | null;
   files: MovieFile[];
+  onWatchlist: boolean;
 }
 
 type SortOption = 'title' | 'releaseDate';
@@ -48,6 +49,7 @@ function buildPageQuery(sort: SortOption, sortDirection: SortDir, offset: number
       year
       posterURL(width: 300)
       uuid
+      onWatchlist
       playState { finished playtime }
       files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
@@ -259,6 +261,7 @@ export default function Movies() {
                 progress={(!movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration)
                   ? movie.playState.playtime / movie.files[0].totalDuration
                   : undefined}
+                onWatchlist={movie.onWatchlist}
               />
             ))}
           </div>

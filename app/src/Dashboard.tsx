@@ -6,7 +6,7 @@ import PosterCard from './PosterCard';
 import Modal from './Modal';
 import {
   MediaPlayIcon, FilmSimpleIcon, TvIcon, PlayIcon, PlayOutlineIcon,
-  FolderPlusIcon, RefreshCwIcon, SettingsIcon, ClockIcon,
+  FolderPlusIcon, RefreshCwIcon, SettingsIcon, ClockIcon, BookmarkIcon,
 } from './Icons';
 
 /* ─── Types ─── */
@@ -40,6 +40,7 @@ interface Movie {
   uuid: string;
   playState: PlayState | null;
   files: MovieFile[];
+  onWatchlist: boolean;
 }
 
 interface Season {
@@ -79,6 +80,7 @@ interface Series {
   uuid: string;
   firstAirDate: string;
   unwatchedEpisodesCount: number;
+  onWatchlist: boolean;
 }
 
 interface MediaStats {
@@ -87,6 +89,27 @@ interface MediaStats {
   seasonCount: number;
   episodeCount: number;
 }
+
+interface WatchlistMovie {
+  __typename: 'Movie';
+  title: string;
+  year: string;
+  posterURL: string;
+  uuid: string;
+  playState: PlayState | null;
+  files: MovieFile[];
+}
+
+interface WatchlistSeries {
+  __typename: 'Series';
+  name: string;
+  posterPath: string;
+  uuid: string;
+  firstAirDate: string;
+  unwatchedEpisodesCount: number;
+}
+
+type WatchlistItem = WatchlistMovie | WatchlistSeries;
 
 /* ─── GraphQL Queries ─── */
 const DASHBOARD_QUERY = `{
@@ -98,6 +121,7 @@ const DASHBOARD_QUERY = `{
     posterURL(width: 300)
     backdropPath
     uuid
+    onWatchlist
     playState { finished playtime }
     files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
   }
@@ -109,6 +133,7 @@ const DASHBOARD_QUERY = `{
     uuid
     firstAirDate
     unwatchedEpisodesCount
+    onWatchlist
   }
   recentlyAdded {
     __typename
@@ -117,6 +142,7 @@ const DASHBOARD_QUERY = `{
       year
       posterURL(width: 300)
       uuid
+      onWatchlist
       playState { finished playtime }
       files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
@@ -157,6 +183,24 @@ const DASHBOARD_QUERY = `{
     seriesCount
     seasonCount
     episodeCount
+  }
+  watchlist {
+    __typename
+    ... on Movie {
+      title
+      year
+      posterURL(width: 300)
+      uuid
+      playState { finished playtime }
+      files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
+    }
+    ... on Series {
+      name
+      posterPath
+      uuid
+      firstAirDate
+      unwatchedEpisodesCount
+    }
   }
 }`;
 
@@ -297,6 +341,7 @@ export default function Dashboard() {
   const [heroItem, setHeroItem] = useState<Movie | Series | null>(null);
   const [filePicker, setFilePicker] = useState<FilePickerState | null>(null);
   const [heroLoading, setHeroLoading] = useState(false);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   const isAdmin = (() => {
     const jwt = getJwt();
@@ -316,6 +361,7 @@ export default function Dashboard() {
         recentlyAdded: MediaItem[];
         upNext: MediaItem[];
         mediaStats: MediaStats;
+        watchlist: WatchlistItem[];
       }>(DASHBOARD_QUERY);
 
       setMovies(data.movies);
@@ -323,6 +369,7 @@ export default function Dashboard() {
       setRecentlyAdded(data.recentlyAdded ?? []);
       setUpNext(data.upNext ?? []);
       setStats(data.mediaStats);
+      setWatchlist(data.watchlist ?? []);
 
       // Pick a random movie or series with a backdrop for the hero
       const moviesWithBackdrop = data.movies.filter(m => m.backdropPath);
@@ -687,6 +734,54 @@ export default function Dashboard() {
               </section>
             )}
 
+            {/* My Watchlist */}
+            {watchlist.length > 0 && (
+              <section className="section">
+                <div className="section-header">
+                  <h2 className="section-title"><BookmarkIcon width={20} height={20} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />My Watchlist</h2>
+                  <span className="section-link" onClick={() => navigate('/watchlist')} style={{ cursor: 'pointer' }}>See all →</span>
+                </div>
+                <div className="media-row">
+                  {watchlist.map(item => {
+                    if (item.__typename === 'Movie') {
+                      const m = item as WatchlistMovie;
+                      return (
+                        <PosterCard
+                          key={m.uuid}
+                          posterUrl={m.posterURL}
+                          title={m.title}
+                          subtitle={m.year}
+                          detailPath={`/movie/${m.uuid}`}
+                          mediaType="movie"
+                          files={m.files}
+                          playState={m.playState}
+                          mediaUuid={m.uuid}
+                          watched={m.playState?.finished}
+                          progress={(!m.playState?.finished && m.playState?.playtime && m.files?.[0]?.totalDuration)
+                            ? m.playState.playtime / m.files[0].totalDuration
+                            : undefined}
+                        />
+                      );
+                    }
+                    const s = item as WatchlistSeries;
+                    return (
+                      <PosterCard
+                        key={s.uuid}
+                        posterUrl={tmdbImg(s.posterPath)}
+                        title={s.name}
+                        subtitle={s.firstAirDate?.substring(0, 4)}
+                        badge={s.unwatchedEpisodesCount > 0 ? `${s.unwatchedEpisodesCount} new` : undefined}
+                        detailPath={`/series/${s.uuid}`}
+                        mediaType="series"
+                        mediaUuid={s.uuid}
+                        watched={s.unwatchedEpisodesCount === 0}
+                      />
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* Stats Strip */}
             {stats && (
               <div className="activity-strip">
@@ -747,6 +842,7 @@ export default function Dashboard() {
                         progress={(!item.playState?.finished && item.playState?.playtime && item.files?.[0]?.totalDuration)
                           ? item.playState.playtime / item.files[0].totalDuration
                           : undefined}
+                        onWatchlist={isMovie ? (movie as Movie).onWatchlist : undefined}
                       />
                     );
                   })}
@@ -777,6 +873,7 @@ export default function Dashboard() {
                       progress={(!movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration)
                         ? movie.playState.playtime / movie.files[0].totalDuration
                         : undefined}
+                      onWatchlist={movie.onWatchlist}
                     />
                   ))}
                 </div>
@@ -802,6 +899,7 @@ export default function Dashboard() {
                       mediaType="series"
                       mediaUuid={s.uuid}
                       watched={s.unwatchedEpisodesCount === 0}
+                      onWatchlist={s.onWatchlist}
                     />
                   ))}
                 </div>

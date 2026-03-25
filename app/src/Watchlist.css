@@ -1,0 +1,35 @@
+/* ─── WATCHLIST PAGE ─── */
+
+/* Pill filter row */
+.watchlist-pills {
+  display: flex;
+  gap: 6px;
+}
+.watchlist-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text-dim);
+  background: rgba(63, 84, 94, 0.3);
+  border: 1px solid rgba(63, 84, 94, 0.3);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.25s var(--ease-out);
+  white-space: nowrap;
+}
+.watchlist-pill:hover {
+  color: var(--text);
+  background: rgba(63, 84, 94, 0.5);
+}
+.watchlist-pill.active {
+  color: var(--cyan);
+  border-color: rgba(0, 207, 200, 0.35);
+  background: rgba(0, 207, 200, 0.12);
+}
+.watchlist-pill.active:hover {
+  background: rgba(0, 207, 200, 0.2);
+}

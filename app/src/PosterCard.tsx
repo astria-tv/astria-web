@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getJwt, handleAuthFailure } from './auth';
 import './PosterCard.css';
 import Modal from './Modal';
-import { PlayIcon, CheckIcon } from './Icons';
+import { PlayIcon, CheckIcon, BookmarkFilledIcon } from './Icons';
 
 /* ─── Types ─── */
 interface StreamInfo {
@@ -69,6 +69,8 @@ export interface PosterCardProps {
   progress?: number;
   /** Optional callback fired before navigation (e.g. to clear search) */
   onNavigate?: () => void;
+  /** Whether the item is on the user's watchlist */
+  onWatchlist?: boolean;
 }
 
 /* ─── Helpers ─── */
@@ -168,6 +170,7 @@ export default function PosterCard({
   watched,
   progress,
   onNavigate,
+  onWatchlist,
 }: PosterCardProps) {
   const navigate = useNavigate();
   const [filePicker, setFilePicker] = useState<FilePickerState | null>(null);
@@ -305,6 +308,11 @@ export default function PosterCard({
             />
           )}
           {badge && <span className="badge-new">{badge}</span>}
+          {onWatchlist && (
+            <span className="watchlist-badge">
+              <BookmarkFilledIcon width={11} height={11} />
+            </span>
+          )}
           {watched && (
             <span className="watched-badge">
               <CheckIcon width={12} height={12} />

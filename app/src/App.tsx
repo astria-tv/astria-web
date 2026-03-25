@@ -11,6 +11,7 @@ import Player from './Player';
 import AdminSettings from './AdminSettings';
 import ActiveStreams from './ActiveStreams';
 import UnmatchedMedia from './UnmatchedMedia';
+import Watchlist from './Watchlist';
 import Register from './Register';
 import Setup from './Setup';
 import AppLayout from './AppLayout';
@@ -85,6 +86,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AppLayout><SeriesDetails /></AppLayout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/watchlist"
+          element={
+            <RequireAuth>
+              <AppLayout><Watchlist /></AppLayout>
             </RequireAuth>
           }
         />

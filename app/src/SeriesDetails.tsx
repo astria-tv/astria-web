@@ -8,6 +8,7 @@ import {
   CheckIcon, MoreVerticalIcon, SearchIcon, PlayIcon,
   MediaPlayIcon, MonitorIcon, CloseIcon, ErrorCircleIcon,
   ImageIcon, InfoIcon,
+  BookmarkIcon, BookmarkFilledIcon,
 } from './Icons';
 
 /* ─── Types ─── */
@@ -73,6 +74,7 @@ interface Series {
   tmdbID: number;
   uuid: string;
   unwatchedEpisodesCount: number;
+  onWatchlist: boolean;
 }
 
 interface TmdbSeriesResult {
@@ -96,6 +98,7 @@ const SERIES_DETAIL_QUERY = `query SeriesDetail($uuid: String!) {
     tmdbID
     uuid
     unwatchedEpisodesCount
+    onWatchlist
     seasons {
       name
       overview
@@ -138,6 +141,14 @@ const SERIES_DETAIL_QUERY = `query SeriesDetail($uuid: String!) {
 }`;
 
 /* ─── Mutations ─── */
+const ADD_TO_WATCHLIST = `mutation AddToWatchlist($mediaUUID: String!, $mediaType: String!) {
+  addToWatchlist(mediaUUID: $mediaUUID, mediaType: $mediaType) { success }
+}`;
+
+const REMOVE_FROM_WATCHLIST = `mutation RemoveFromWatchlist($mediaUUID: String!) {
+  removeFromWatchlist(mediaUUID: $mediaUUID) { success }
+}`;
+
 const CREATE_PLAY_STATE = `mutation CreatePlayState($uuid: String!, $finished: Boolean!, $playtime: Float!) {
   createPlayState(uuid: $uuid, finished: $finished, playtime: $playtime) {
     uuid
@@ -207,6 +218,7 @@ export default function SeriesDetails() {
   const [togglingEpisodes, setTogglingEpisodes] = useState<Set<string>>(new Set());
   const [togglingSeason, setTogglingSeason] = useState(false);
   const [togglingSeries, setTogglingSeries] = useState(false);
+  const [togglingWatchlist, setTogglingWatchlist] = useState(false);
 
   // Episode file picker state (for episodes with multiple files)
   const [filePickerEp, setFilePickerEp] = useState<Episode | null>(null);
@@ -520,6 +532,23 @@ export default function SeriesDetails() {
     }
   }
 
+  async function toggleWatchlist() {
+    if (!series || togglingWatchlist) return;
+    setTogglingWatchlist(true);
+    try {
+      if (series.onWatchlist) {
+        await gqlFetch(REMOVE_FROM_WATCHLIST, { mediaUUID: series.uuid });
+      } else {
+        await gqlFetch(ADD_TO_WATCHLIST, { mediaUUID: series.uuid, mediaType: 'series' });
+      }
+      setSeries(prev => prev ? { ...prev, onWatchlist: !prev.onWatchlist } : prev);
+    } catch (err) {
+      console.error('Failed to toggle watchlist:', err);
+    } finally {
+      setTogglingWatchlist(false);
+    }
+  }
+
   async function toggleSeriesWatched() {
     if (!series || togglingSeries) return;
     const allWatched = series.seasons
@@ -634,7 +663,16 @@ export default function SeriesDetails() {
                   {togglingSeries ? 'Updating…' : allSeriesWatched ? 'Series Watched' : 'Mark All Watched'}
                 </button>
               );
-            })()}            {isAdmin && (
+            })()}
+            <button
+              className={`btn-series-toggle${series.onWatchlist ? ' active' : ''}`}
+              onClick={toggleWatchlist}
+              disabled={togglingWatchlist}
+              title={series.onWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            >
+              {series.onWatchlist ? <BookmarkFilledIcon /> : <BookmarkIcon />}
+            </button>
+            {isAdmin && (
               <div className="admin-dropdown" ref={dropdownRef}>
                 <button
                   className="btn-series-toggle admin-dropdown-toggle-inline"

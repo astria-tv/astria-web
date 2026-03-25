@@ -4,7 +4,7 @@ import { getJwt, clearAuth, parseJwt, handleAuthFailure } from './auth';
 import PosterCard from './PosterCard';
 import {
   HomeIcon, FilmIcon, TvIcon, FilePlusIcon, StreamIcon, SettingsIcon,
-  ChevronLeftIcon, SearchIcon, LogoutIcon, CloseIcon,
+  ChevronLeftIcon, SearchIcon, LogoutIcon, CloseIcon, BookmarkIcon,
 } from './Icons';
 
 /* ─── Types ─── */
@@ -163,6 +163,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </button>
           <button className={`nav-btn${location.pathname === '/series' ? ' active' : ''}`} title="TV Shows" onClick={() => navigate('/series')}>
             <TvIcon />
+          </button>
+          <button className={`nav-btn${location.pathname === '/watchlist' ? ' active' : ''}`} title="Watchlist" onClick={() => navigate('/watchlist')}>
+            <BookmarkIcon />
           </button>
           {isAdmin && (
             <button className={`nav-btn${location.pathname === '/unmatched' ? ' active' : ''}`} title="Unmatched Media" onClick={() => navigate('/unmatched')}>

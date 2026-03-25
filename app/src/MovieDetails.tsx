@@ -7,6 +7,7 @@ import {
   CheckIcon, MoreVerticalIcon, SearchIcon, PlayIcon,
   ChevronDownIcon, InfoIcon, CloseIcon,
   ErrorCircleIcon, ImageIcon,
+  BookmarkIcon, BookmarkFilledIcon,
 } from './Icons';
 import MediaInfoPanel from './MediaInfoPanel';
 
@@ -50,6 +51,7 @@ interface Movie {
   uuid: string;
   files: MovieFile[];
   playState: PlayState | null;
+  onWatchlist: boolean;
 }
 
 interface TmdbMovieResult {
@@ -62,6 +64,14 @@ interface TmdbMovieResult {
 }
 
 /* ─── Mutations ─── */
+const ADD_TO_WATCHLIST = `mutation AddToWatchlist($mediaUUID: String!, $mediaType: String!) {
+  addToWatchlist(mediaUUID: $mediaUUID, mediaType: $mediaType) { success }
+}`;
+
+const REMOVE_FROM_WATCHLIST = `mutation RemoveFromWatchlist($mediaUUID: String!) {
+  removeFromWatchlist(mediaUUID: $mediaUUID) { success }
+}`;
+
 const CREATE_PLAY_STATE = `mutation CreatePlayState($uuid: String!, $finished: Boolean!, $playtime: Float!) {
   createPlayState(uuid: $uuid, finished: $finished, playtime: $playtime) {
     uuid
@@ -96,6 +106,7 @@ const MOVIE_DETAIL_QUERY = `query MovieDetail($uuid: String!) {
     backdropPath
     posterURL(width: 500)
     uuid
+    onWatchlist
     playState { finished playtime }
     files {
       fileName
@@ -173,6 +184,7 @@ export default function MovieDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [togglingWatchlist, setTogglingWatchlist] = useState(false);
 
   // Admin check
   const isAdmin = useMemo(() => {
@@ -309,6 +321,23 @@ export default function MovieDetails() {
     doFixMatch(id);
   }
 
+  async function toggleWatchlist() {
+    if (!movie || togglingWatchlist) return;
+    setTogglingWatchlist(true);
+    try {
+      if (movie.onWatchlist) {
+        await gqlFetch(REMOVE_FROM_WATCHLIST, { mediaUUID: movie.uuid });
+      } else {
+        await gqlFetch(ADD_TO_WATCHLIST, { mediaUUID: movie.uuid, mediaType: 'movie' });
+      }
+      setMovie(prev => prev ? { ...prev, onWatchlist: !prev.onWatchlist } : prev);
+    } catch (err) {
+      console.error('Failed to toggle watchlist:', err);
+    } finally {
+      setTogglingWatchlist(false);
+    }
+  }
+
   async function toggleWatched() {
     if (!movie || toggling) return;
     const isWatched = movie.playState?.finished ?? false;
@@ -437,6 +466,14 @@ export default function MovieDetails() {
             >
               <CheckIcon />
               {toggling ? 'Updating…' : movie.playState?.finished ? 'Watched' : 'Mark Watched'}
+            </button>
+            <button
+              className={`btn-movie-toggle${movie.onWatchlist ? ' active' : ''}`}
+              onClick={toggleWatchlist}
+              disabled={togglingWatchlist}
+              title={movie.onWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            >
+              {movie.onWatchlist ? <BookmarkFilledIcon /> : <BookmarkIcon />}
             </button>
             {isAdmin && (
               <div className="admin-dropdown" ref={dropdownRef}>

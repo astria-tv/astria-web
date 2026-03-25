@@ -7,6 +7,7 @@ schema {
 union MediaItem = Movie | Episode
 union SearchItem = Movie | Series
 union MediaFileItem = MovieFile | EpisodeFile
+union WatchlistMediaItem = Movie | Series
 
 
 enum SortDirection {
@@ -34,6 +35,7 @@ type Query {
     recentlyAdded: [MediaItem]
     upNext: [MediaItem]
     search(name: String!): [SearchItem]
+    watchlist: [WatchlistMediaItem]!
     invites: [Invite]
     # List of all remotes found in a rclone config file if one exists.
     remotes: [String]!
@@ -98,6 +100,12 @@ type Mutation {
 
     # Rescan all library paths for new files that are not indexed yet.
     rescanLibraries: Boolean!
+
+    # Add a media item (movie or series) to the user's watchlist.
+    addToWatchlist(mediaUUID: String!, mediaType: String!): BoolResponse!
+
+    # Remove a media item from the user's watchlist.
+    removeFromWatchlist(mediaUUID: String!): BoolResponse!
 
     # Rescan a library based on the given filters.
     # 1. If supply a "ID" it will refresh the entire library
@@ -224,6 +232,7 @@ type Series {
     type: String!
     uuid: String!
     unwatchedEpisodesCount: Int!
+    onWatchlist: Boolean!
 }
 
 enum SeriesSort {
@@ -324,6 +333,7 @@ type Movie {
     uuid: String!
     files: [MovieFile]!
     playState: PlayState
+    onWatchlist: Boolean!
 }
 
 enum MovieSort {

@@ -167,6 +167,30 @@
   flex-shrink: 0;
 }
 
+/* ─── WATCHLIST INDICATOR ─── */
+.watchlist-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(0, 207, 200, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  opacity: 0.8;
+  transition: opacity 0.2s var(--ease-out);
+}
+.poster-card:hover .watchlist-badge {
+  opacity: 0;
+}
+.watchlist-badge svg {
+  color: var(--bg-deep);
+}
+
 /* ─── WATCHED INDICATOR ─── */
 .watched-badge {
   position: absolute;
