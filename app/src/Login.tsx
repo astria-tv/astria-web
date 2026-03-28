@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { setJwt } from './auth';
+import { getJwt, setJwt } from './auth';
 import './Login.css';
 
 export default function Login() {
@@ -10,6 +10,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (getJwt()) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

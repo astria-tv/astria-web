@@ -147,6 +147,23 @@ function getPlayableCodecsParams(): string {
   return supported.map(c => `playableCodecs=${encodeURIComponent(c)}`).join('&');
 }
 
+/** Known Chromecast-safe codecs (all generations of Cast devices). */
+function getChromecastCodecsParams(): string {
+  const codecs = [
+    // H.264 profiles (up to High Profile Level 4.1)
+    'avc1.640029', 'avc1.640028', 'avc1.4d4028', 'avc1.64001e', 'avc1.640020',
+    // AAC
+    'mp4a.40.2', 'mp4a.40.5',
+    // Dolby Digital / Digital Plus
+    'ac-3', 'ec-3',
+    // Opus & Vorbis
+    'opus', 'vorbis',
+    // FLAC
+    'flac',
+  ];
+  return codecs.map(c => `playableCodecs=${encodeURIComponent(c)}`).join('&');
+}
+
 /* ─── Component ─── */
 export default function Player() {
   const { fileUuid } = useParams<{ fileUuid: string }>();
@@ -324,8 +341,8 @@ export default function Player() {
 
     // Build absolute URL for the cast device.
     // The JWT is already inherently embedded in the hlsStreamingPath.
-    // Send playable codecs so the server transcodes audio if necessary.
-    const codecParams = getPlayableCodecsParams();
+    // Use Chromecast-safe codecs rather than browser-probed ones.
+    const codecParams = getChromecastCodecsParams();
     const separator = ticket.hlsStreamingPath.includes('?') ? '&' : '?';
     let streamUrl = `${window.location.origin}${ticket.hlsStreamingPath}`;
     if (codecParams) {
