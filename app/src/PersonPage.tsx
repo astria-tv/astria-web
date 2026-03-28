@@ -3,14 +3,37 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getJwt, handleAuthFailure } from './auth';
 import './PersonPage.css';
 import { ImageIcon } from './Icons';
+import PosterCard from './PosterCard';
 
 /* ─── Types ─── */
+interface StreamInfo {
+  codecName: string | null;
+  bitRate: number | null;
+  streamType: string | null;
+  resolution: string | null;
+}
+
+interface PlayState {
+  finished: boolean;
+  playtime: number;
+}
+
+interface FileInfo {
+  uuid: string;
+  totalDuration: number | null;
+  fileSize: string;
+  streams: StreamInfo[];
+}
+
 interface MovieMedia {
   __typename: 'Movie';
   title: string;
   posterURL: string;
   uuid: string;
   year: string;
+  playState: PlayState | null;
+  files: FileInfo[];
+  onWatchlist: boolean;
 }
 
 interface SeriesMedia {
@@ -19,6 +42,8 @@ interface SeriesMedia {
   posterPath: string;
   uuid: string;
   firstAirDate: string;
+  unwatchedEpisodesCount: number;
+  onWatchlist: boolean;
 }
 
 type MediaItem = MovieMedia | SeriesMedia;
@@ -58,12 +83,22 @@ const PERSON_QUERY = `query Person($tmdbID: Int!) {
           posterURL(width: 300)
           uuid
           year
+          playState { finished playtime }
+          files {
+            uuid
+            totalDuration
+            fileSize
+            streams { codecName bitRate streamType resolution }
+          }
+          onWatchlist
         }
         ... on Series {
           name
           posterPath
           uuid
           firstAirDate
+          unwatchedEpisodesCount
+          onWatchlist
         }
       }
     }
@@ -218,50 +253,37 @@ export default function PersonPage() {
           <div className="filmography-grid">
             {person.castRoles.map((role, i) => {
               const isMovie = role.media.__typename === 'Movie';
-              const title = isMovie
-                ? (role.media as MovieMedia).title
-                : (role.media as SeriesMedia).name;
-              const posterUrl = isMovie
-                ? (role.media as MovieMedia).posterURL
-                : tmdbImg((role.media as SeriesMedia).posterPath);
-              const year = isMovie
-                ? (role.media as MovieMedia).year
-                : (role.media as SeriesMedia).firstAirDate?.slice(0, 4);
-              const path = isMovie
-                ? `/movie/${(role.media as MovieMedia).uuid}`
-                : `/series/${(role.media as SeriesMedia).uuid}`;
+              const movie = isMovie ? (role.media as MovieMedia) : null;
+              const series = !isMovie ? (role.media as SeriesMedia) : null;
+              const title = movie ? movie.title : series!.name;
+              const posterUrl = movie ? movie.posterURL : tmdbImg(series!.posterPath);
+              const year = movie ? movie.year : series!.firstAirDate?.slice(0, 4);
+              const path = movie ? `/movie/${movie.uuid}` : `/series/${series!.uuid}`;
+              const uuid = movie ? movie.uuid : series!.uuid;
+
+              const subtitleParts: string[] = [];
+              if (role.character) subtitleParts.push(`as ${role.character}`);
+              if (year) subtitleParts.push(year);
+              const subtitle = subtitleParts.join(' · ');
 
               return (
-                <div
-                  className="filmography-card"
-                  key={`${role.media.__typename}-${isMovie ? (role.media as MovieMedia).uuid : (role.media as SeriesMedia).uuid}-${i}`}
-                  onClick={() => navigate(path)}
-                  style={{ animationDelay: `${Math.min(i * 0.04, 0.6)}s` }}
-                >
-                  <div className="filmography-poster">
-                    {posterUrl ? (
-                      <img
-                        src={posterUrl}
-                        alt={title}
-                        onLoad={e => e.currentTarget.classList.add('loaded')}
-                      />
-                    ) : (
-                      <div className="filmography-poster-empty">
-                        <ImageIcon />
-                      </div>
-                    )}
-                    <span className="filmography-type-badge">
-                      {isMovie ? 'Movie' : 'Series'}
-                    </span>
-                  </div>
-                  <div className="filmography-info">
-                    <span className="filmography-title">{title}</span>
-                    {role.character && (
-                      <span className="filmography-character">as {role.character}</span>
-                    )}
-                    {year && <span className="filmography-year">{year}</span>}
-                  </div>
-                </div>
+                <PosterCard
+                  key={`${role.media.__typename}-${uuid}-${i}`}
+                  posterUrl={posterUrl}
+                  title={title}
+                  subtitle={subtitle}
+                  detailPath={path}
+                  mediaType={isMovie ? 'movie' : 'series'}
+                  mediaUuid={uuid}
+                  seriesUuid={series ? series.uuid : undefined}
+                  files={movie?.files}
+                  playState={movie?.playState}
+                  watched={movie ? movie.playState?.finished : series!.unwatchedEpisodesCount === 0}
+                  progress={movie && !movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration
+                    ? movie.playState.playtime / movie.files[0].totalDuration
+                    : undefined}
+                  onWatchlist={movie ? movie.onWatchlist : series!.onWatchlist}
+                />
               );
             })}
           </div>
