@@ -611,7 +611,11 @@ export default function MovieDetails() {
               <h3>Cast</h3>
               <div className="cast-scroll">
                 {movie.cast.map(role => (
-                  <div className="cast-card" key={`${role.person.tmdbID}-${role.character}`}>
+                  <div
+                    className="cast-card cast-card-link"
+                    key={`${role.person.tmdbID}-${role.character}`}
+                    onClick={() => navigate(`/person/${role.person.tmdbID}`)}
+                  >
                     <div className="cast-avatar">
                       {role.person.profilePath ? (
                         <img

@@ -12,6 +12,7 @@ import AdminSettings from './AdminSettings';
 import ActiveStreams from './ActiveStreams';
 import UnmatchedMedia from './UnmatchedMedia';
 import Watchlist from './Watchlist';
+import PersonPage from './PersonPage';
 import Register from './Register';
 import Setup from './Setup';
 import AppLayout from './AppLayout';
@@ -126,6 +127,14 @@ export default function App() {
           element={
             <RequireAuth>
               <AppLayout><UnmatchedMedia /></AppLayout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/person/:tmdbID"
+          element={
+            <RequireAuth>
+              <AppLayout><PersonPage /></AppLayout>
             </RequireAuth>
           }
         />

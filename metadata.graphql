@@ -4,10 +4,9 @@ schema {
     mutation: Mutation
 }
 
-union MediaItem = Movie | Episode
-union SearchItem = Movie | Series
+union MovieOrEpisode = Movie | Episode
+union MovieOrSeries = Movie | Series
 union MediaFileItem = MovieFile | EpisodeFile
-union WatchlistMediaItem = Movie | Series
 
 
 enum SortDirection {
@@ -19,9 +18,6 @@ type Subscription {
     moviesChanged: MetadataEvent!
     seriesChanged: MetadataEvent!
     seasonChanged(seriesUUID: String): MetadataEvent!
-    # TODO(Leon Handreke): Add an episodeChanged call here to monitor a given season
-    # (or should it be a whole season?). However, let's first verify that this design works well
-    # on the client side
 }
 
 # The query type, represents all of the entry points into our object graph
@@ -32,10 +28,10 @@ type Query {
     season(uuid: String): Season!
     episode(uuid: String): Episode
     users: [User]!
-    recentlyAdded: [MediaItem]
-    upNext: [MediaItem]
-    search(name: String!): [SearchItem]
-    watchlist: [WatchlistMediaItem]!
+    recentlyAdded: [MovieOrEpisode]
+    upNext: [MovieOrEpisode]
+    search(name: String!): [MovieOrSeries]
+    watchlist: [MovieOrSeries]!
     invites: [Invite]
     # List of all remotes found in a rclone config file if one exists.
     remotes: [String]!
@@ -68,6 +64,9 @@ type Query {
 
     tmdbSearchMovies(query: String!): [TmdbMovieSearchItem]!
     tmdbSearchSeries(query: String!): [TmdbSeriesSearchItem]!
+
+    # Look up a person by their TMDB ID, including all cast roles in the library.
+    person(tmdbID: Int!): Person
 }
 
 type Mutation {
@@ -377,7 +376,7 @@ input UpdateMovieFileMetadataInput {
 type UpdateMovieFileMetadataPayload {
     error: Error
 
-    mediaItem: MediaItem
+    mediaItem: MovieOrEpisode
 }
 
 input UpdateEpisodeFileMetadataInput {
@@ -489,6 +488,16 @@ type Person {
     deathday: String!
     # Place of birth
     placeOfBirth: String!
+    # All cast roles this person has across movies and series in the library
+    castRoles: [PersonCastRole]!
+}
+
+# A cast role from the perspective of a person — links to the media they appeared in
+type PersonCastRole {
+    # Character name played
+    character: String!
+    # The movie or series the person appeared in
+    media: MovieOrSeries!
 }
 
 # A cast role linking a person to a movie or series

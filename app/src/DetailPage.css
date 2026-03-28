@@ -197,6 +197,9 @@
   text-align: center;
   animation: fadeIn 0.5s var(--ease-out) both;
 }
+.cast-card-link {
+  cursor: pointer;
+}
 .cast-avatar {
   width: 96px;
   height: 96px;

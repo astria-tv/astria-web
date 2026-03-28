@@ -1,0 +1,270 @@
+/* ─── Person Page ─── */
+
+.person-page {
+  padding: 80px 60px 60px;
+  animation: fadeInUp 0.6s var(--ease-out-expo) both;
+}
+
+/* ─── Hero ─── */
+.person-hero {
+  position: relative;
+  padding: 20px 0 0;
+}
+
+.person-hero-bg {
+  position: absolute;
+  top: -80px;
+  left: -60px;
+  right: -60px;
+  height: 400px;
+  background: linear-gradient(135deg, #0f2a36 0%, #1a3848 40%, #0d1518 100%);
+  opacity: 0.5;
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+}
+
+.person-hero-content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* ─── Photo ─── */
+.person-photo {
+  width: 220px;
+  height: 330px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(160deg, #1c2d3a, #2e4a5c);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s var(--ease-out), box-shadow 0.4s;
+}
+
+.person-photo:hover {
+  transform: scale(1.03);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, 0.6);
+}
+
+.person-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.person-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+}
+
+.person-photo-placeholder svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.4;
+}
+
+/* ─── Header Info ─── */
+.person-header-info {
+  padding-top: 40px;
+}
+
+.person-header-info h1 {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.person-meta {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+.person-meta span {
+  position: relative;
+}
+
+.person-meta span + span::before {
+  content: '·';
+  position: absolute;
+  left: -12px;
+  color: var(--text-dim);
+}
+
+/* ─── Bio ─── */
+.person-bio {
+  max-width: 640px;
+  position: relative;
+}
+
+.person-bio p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  white-space: pre-line;
+}
+
+.person-bio.collapsed p {
+  max-height: 8.5em;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+}
+
+.bio-toggle {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--cyan);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.bio-toggle:hover {
+  color: var(--cyan-bright);
+}
+
+/* ─── Filmography ─── */
+.person-filmography {
+  margin-top: 48px;
+}
+
+.person-filmography h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.role-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(0, 207, 200, 0.12);
+  border: 1px solid rgba(0, 207, 200, 0.2);
+  border-radius: 20px;
+}
+
+.filmography-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 24px 18px;
+}
+
+/* ─── Filmography Card ─── */
+.filmography-card {
+  cursor: pointer;
+  animation: fadeInUp 0.5s var(--ease-out) both;
+  transition: transform 0.3s var(--ease-out);
+}
+
+.filmography-card:hover {
+  transform: translateY(-4px);
+}
+
+.filmography-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: linear-gradient(160deg, #1e3340, #2a4858);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  transition: box-shadow 0.3s var(--ease-out);
+}
+
+.filmography-card:hover .filmography-poster {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.filmography-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.filmography-poster-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+}
+
+.filmography-poster-empty svg {
+  width: 32px;
+  height: 32px;
+  opacity: 0.3;
+}
+
+.filmography-type-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.filmography-info {
+  padding: 10px 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filmography-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.filmography-character {
+  font-size: 12px;
+  color: var(--text-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.filmography-year {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0.7;
+}

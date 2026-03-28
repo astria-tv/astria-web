@@ -782,39 +782,6 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* Stats Strip */}
-            {stats && (
-              <div className="activity-strip">
-                <div className="activity-card">
-                  <div className="activity-icon green">
-                    <FilmSimpleIcon />
-                  </div>
-                  <div className="activity-text">
-                    <h4>{stats.movieCount.toLocaleString()}</h4>
-                    <p>Movies</p>
-                  </div>
-                </div>
-                <div className="activity-card">
-                  <div className="activity-icon blue">
-                    <TvIcon />
-                  </div>
-                  <div className="activity-text">
-                    <h4>{stats.seriesCount.toLocaleString()}</h4>
-                    <p>TV Series</p>
-                  </div>
-                </div>
-                <div className="activity-card">
-                  <div className="activity-icon amber">
-                    <PlayOutlineIcon />
-                  </div>
-                  <div className="activity-text">
-                    <h4>{stats.episodeCount.toLocaleString()}</h4>
-                    <p>Episodes</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Recently Added */}
             {recentlyAdded.length > 0 && (
               <section className="section">
@@ -850,60 +817,37 @@ export default function Dashboard() {
               </section>
             )}
 
-            {/* Movies */}
-            {movies.length > 0 && (
-              <section className="section">
-                <div className="section-header">
-                  <h2 className="section-title">Movies</h2>
-                  <span className="section-link" onClick={() => navigate('/movies')} style={{ cursor: 'pointer' }}>See all →</span>
+            {/* Stats Strip */}
+            {stats && (
+              <div className="activity-strip" style={{ paddingBottom: 60 }}>
+                <div className="activity-card">
+                  <div className="activity-icon green">
+                    <FilmSimpleIcon />
+                  </div>
+                  <div className="activity-text">
+                    <h4>{stats.movieCount.toLocaleString()}</h4>
+                    <p>Movies</p>
+                  </div>
                 </div>
-                <div className="media-row">
-                  {movies.map(movie => (
-                    <PosterCard
-                      key={movie.uuid}
-                      posterUrl={movie.posterURL}
-                      title={movie.title}
-                      subtitle={movie.year}
-                      detailPath={`/movie/${movie.uuid}`}
-                      mediaType="movie"
-                      files={movie.files}
-                      playState={movie.playState}
-                      mediaUuid={movie.uuid}
-                      watched={movie.playState?.finished}
-                      progress={(!movie.playState?.finished && movie.playState?.playtime && movie.files?.[0]?.totalDuration)
-                        ? movie.playState.playtime / movie.files[0].totalDuration
-                        : undefined}
-                      onWatchlist={movie.onWatchlist}
-                    />
-                  ))}
+                <div className="activity-card">
+                  <div className="activity-icon blue">
+                    <TvIcon />
+                  </div>
+                  <div className="activity-text">
+                    <h4>{stats.seriesCount.toLocaleString()}</h4>
+                    <p>TV Series</p>
+                  </div>
                 </div>
-              </section>
-            )}
-
-            {/* TV Series */}
-            {series.length > 0 && (
-              <section className="section" style={{ paddingBottom: 60 }}>
-                <div className="section-header">
-                  <h2 className="section-title">TV Series</h2>
-                  <span className="section-link" onClick={() => navigate('/series')} style={{ cursor: 'pointer' }}>See all →</span>
+                <div className="activity-card">
+                  <div className="activity-icon amber">
+                    <PlayOutlineIcon />
+                  </div>
+                  <div className="activity-text">
+                    <h4>{stats.episodeCount.toLocaleString()}</h4>
+                    <p>Episodes</p>
+                  </div>
                 </div>
-                <div className="media-row">
-                  {series.map(s => (
-                    <PosterCard
-                      key={s.uuid}
-                      posterUrl={tmdbImg(s.posterPath, 'w300')}
-                      title={s.name}
-                      subtitle={s.firstAirDate?.substring(0, 4)}
-                      badge={s.unwatchedEpisodesCount > 0 ? `${s.unwatchedEpisodesCount} new` : undefined}
-                      detailPath={`/series/${s.uuid}`}
-                      mediaType="series"
-                      mediaUuid={s.uuid}
-                      watched={s.unwatchedEpisodesCount === 0}
-                      onWatchlist={s.onWatchlist}
-                    />
-                  ))}
-                </div>
-              </section>
+              </div>
             )}
 
       {/* File Picker Modal */}
