@@ -239,6 +239,7 @@ interface FilePickerOption {
 interface FilePickerState {
   title: string;
   subtitle: string;
+  posterUrl?: string;
   mediaUuid: string;
   startTime: number;
   episodeUuid?: string;
@@ -394,9 +395,9 @@ export default function Dashboard() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number, episodeUuid?: string) {
+  function playFile(fileUuid: string, title: string, subtitle: string, mediaUuid: string, startTime: number, episodeUuid?: string, posterUrl?: string) {
     navigate(`/play/${fileUuid}`, {
-      state: { title, subtitle, mediaUuid, startTime, episodeUuid },
+      state: { title, subtitle, posterUrl, mediaUuid, startTime, episodeUuid },
     });
   }
 
@@ -408,12 +409,14 @@ export default function Dashboard() {
     const e = episode.episodeNumber;
     const subtitle = `${seriesName} · S${s} E${e}`;
 
+    const posterUrl = episode.stillPath ? tmdbImg(episode.stillPath, 'w342') : undefined;
     if (episode.files.length === 1) {
-      playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime, episode.uuid);
+      playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime, episode.uuid, posterUrl);
     } else {
       setFilePicker({
         title: episode.name,
         subtitle,
+        posterUrl,
         mediaUuid: episode.uuid,
         startTime,
         episodeUuid: episode.uuid,
@@ -437,12 +440,14 @@ export default function Dashboard() {
     const duration = movie.files[0]?.totalDuration;
     const subtitle = [movie.year, duration ? formatDuration(duration) : null].filter(Boolean).join(' · ');
 
+    const posterUrl = movie.posterURL || undefined;
     if (movie.files.length === 1) {
-      playFile(movie.files[0].uuid, movie.title, subtitle, movie.uuid, startTime);
+      playFile(movie.files[0].uuid, movie.title, subtitle, movie.uuid, startTime, undefined, posterUrl);
     } else {
       setFilePicker({
         title: movie.title,
         subtitle,
+        posterUrl,
         mediaUuid: movie.uuid,
         startTime,
         options: buildFileOptions(movie.files),
@@ -493,12 +498,14 @@ export default function Dashboard() {
       const startTime = targetEp.playState?.finished ? 0 : (targetEp.playState?.playtime ?? 0);
       const subtitle = `${seriesData.name} · ${targetSeason.name} · E${targetEp.episodeNumber}`;
 
+      const posterUrl = s.posterPath ? tmdbImg(s.posterPath, 'w342') : undefined;
       if (targetEp.files.length === 1) {
-        playFile(targetEp.files[0].uuid, targetEp.name, subtitle, targetEp.uuid, startTime);
+        playFile(targetEp.files[0].uuid, targetEp.name, subtitle, targetEp.uuid, startTime, undefined, posterUrl);
       } else {
         setFilePicker({
           title: targetEp.name,
           subtitle,
+          posterUrl,
           mediaUuid: targetEp.uuid,
           startTime,
           options: buildFileOptions(targetEp.files),
@@ -862,7 +869,7 @@ export default function Dashboard() {
                 key={opt.uuid}
                 className="fp-option"
                 onClick={() => {
-                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid);
+                  playFile(opt.uuid, filePicker.title, filePicker.subtitle, filePicker.mediaUuid, filePicker.startTime, filePicker.episodeUuid, filePicker.posterUrl);
                   setFilePicker(null);
                 }}
               >

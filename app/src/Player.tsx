@@ -33,6 +33,7 @@ interface StreamingTicket {
 interface LocationState {
   title?: string;
   subtitle?: string;
+  posterUrl?: string;
   mediaUuid?: string;
   startTime?: number;
   episodeUuid?: string;
@@ -353,6 +354,7 @@ export default function Player() {
       contentUrl: streamUrl,
       title: state.title ?? 'Now Playing',
       subtitle: state.subtitle,
+      posterUrl: state.posterUrl,
       startTime: video ? video.currentTime : (state.startTime ?? 0),
     });
   }, [isCasting, ticket]);
@@ -488,6 +490,7 @@ export default function Player() {
       state: {
         title: nextEpisode.name,
         subtitle: `${nextEpisode.seriesName} · ${nextEpisode.seasonName} · E${nextEpisode.episodeNumber}`,
+        posterUrl: nextEpisode.stillPath ? tmdbImg(nextEpisode.stillPath, 'w342') : undefined,
         mediaUuid: nextEpisode.episodeUuid,
         episodeUuid: nextEpisode.episodeUuid,
         startTime: 0,

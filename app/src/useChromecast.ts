@@ -164,9 +164,7 @@ export function useChromecast() {
   function initCast() {
     const context = cast.framework.CastContext.getInstance();
     context.setOptions({
-      receiverApplicationId: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-        ? 'CC1AD845' // Default Media Receiver
-        : 'CC1AD845',
+      receiverApplicationId: 'A078927C',
       autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
     });
     setCastState('available');

@@ -528,6 +528,7 @@ export default function MovieDetails() {
                     state: {
                       title: movie.title,
                       subtitle: [movie.year, duration ? formatDuration(duration) : null, resolutionLabel].filter(Boolean).join(' · '),
+                      posterUrl: movie.posterURL || undefined,
                       mediaUuid: movie.uuid,
                       startTime: movie.playState?.finished ? 0 : (movie.playState?.playtime ?? 0),
                     },
