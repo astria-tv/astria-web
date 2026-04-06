@@ -23,7 +23,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch('/olaris/m/v1/auth', {
+      const res = await fetch('/astria/m/v1/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, remember_me: rememberMe }),

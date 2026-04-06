@@ -31,7 +31,7 @@ function RedirectIfSetup({ children }: { children: React.ReactNode }) {
   const [needsSetup, setNeedsSetup] = useState(false);
 
   useEffect(() => {
-    fetch('/olaris/m/v1/user/setup')
+    fetch('/astria/m/v1/user/setup')
       .then(r => r.text())
       .then(text => setNeedsSetup(text.trim() === 'true'))
       .catch(() => {})
@@ -45,7 +45,7 @@ function RedirectIfSetup({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/olaris/app">
+    <BrowserRouter basename="/astria/app">
       <Routes>
         <Route path="/" element={<RedirectIfSetup><Login /></RedirectIfSetup>} />
         <Route path="/setup" element={<Setup />} />

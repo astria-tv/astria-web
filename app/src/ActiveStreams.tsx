@@ -141,7 +141,7 @@ export default function ActiveStreams() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const data = await gqlFetch<{ users: { id: number; username: string }[] }>('/olaris/m/query', USERS_QUERY);
+      const data = await gqlFetch<{ users: { id: number; username: string }[] }>('/astria/m/query', USERS_QUERY);
       const map: Record<number, string> = {};
       for (const u of data.users) map[u.id] = u.username;
       setUserMap(map);
@@ -152,7 +152,7 @@ export default function ActiveStreams() {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const data = await gqlFetch<{ sessions: Session[] }>('/olaris/s/query', SESSIONS_QUERY);
+      const data = await gqlFetch<{ sessions: Session[] }>('/astria/s/query', SESSIONS_QUERY);
       setSessions(data.sessions ?? []);
       setLastRefresh(new Date());
       setError('');

@@ -52,7 +52,7 @@ interface NextEpisodeInfo {
 /* ─── GraphQL helper ─── */
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const jwt = getJwt();
-  const res = await fetch('/olaris/m/query', {
+  const res = await fetch('/astria/m/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -218,6 +218,7 @@ export default function Player() {
     castState, castCurrentTime, castDuration, castPlaying,
     castError, requestSession, endSession, loadMedia,
     castPlay, castPause, castSeek,
+    castSubtitleTracks, castSetSubtitleTrack,
   } = useChromecast();
   const isCasting = castState === 'connected';
 
@@ -354,7 +355,9 @@ export default function Player() {
       contentUrl: streamUrl,
       title: state.title ?? 'Now Playing',
       subtitle: state.subtitle,
-      posterUrl: state.posterUrl,
+      posterUrl: state.posterUrl
+        ? (state.posterUrl.startsWith('http') ? state.posterUrl : `${window.location.origin}${state.posterUrl}`)
+        : undefined,
       startTime: video ? video.currentTime : (state.startTime ?? 0),
     });
   }, [isCasting, ticket]);
@@ -712,6 +715,12 @@ export default function Player() {
   }
 
   function switchSubtitle(trackIndex: number) {
+    if (isCasting) {
+      castSetSubtitleTrack(trackIndex === -1 ? null : castSubtitleTracks[trackIndex]?.trackId ?? null);
+      setSelectedSubtitle(trackIndex);
+      setSettingsView('main');
+      return;
+    }
     const hls = hlsRef.current;
     const video = videoRef.current;
     if (!hls || !video) return;
@@ -753,9 +762,12 @@ export default function Player() {
   const audioLabel = audioStreams.length > 0
     ? [audioStreams[0].language?.toUpperCase(), audioStreams[0].title].filter(Boolean).join(' · ') || audioStreams[0].codecName?.toUpperCase()
     : null;
+  const activeSubtitleTracks = isCasting
+    ? castSubtitleTracks.map((t, i) => ({ name: t.name, lang: t.language, index: i }))
+    : subtitleTracks;
   const currentSubtitleLabel = selectedSubtitle === -1
     ? 'Off'
-    : subtitleTracks.find(t => t.index === selectedSubtitle)?.name ?? '?';
+    : activeSubtitleTracks.find(t => t.index === selectedSubtitle)?.name ?? '?';
   const speedOptions = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
 
   return (
@@ -884,7 +896,7 @@ export default function Player() {
           <span className="spacer" />
 
           {/* Subtitles toggle */}
-          {subtitleTracks.length > 0 && (
+          {activeSubtitleTracks.length > 0 && (
             <button
               className={`ctrl-btn${selectedSubtitle !== -1 ? ' sub-active' : ''}`}
               title="Subtitles"
@@ -952,7 +964,7 @@ export default function Player() {
                   <span className="sp-value">{audioLabel}</span>
                 </div>
               )}
-              {subtitleTracks.length > 0 && (
+              {activeSubtitleTracks.length > 0 && (
                 <div className="sp-item" onClick={() => setSettingsView('subtitles')}>
                   <span className="sp-label">Subtitles</span>
                   <span className="sp-value">{currentSubtitleLabel} <ChevronRightIcon width={14} height={14} /></span>
@@ -998,7 +1010,7 @@ export default function Player() {
                 <span>Off</span>
                 {selectedSubtitle === -1 && <CheckIcon width={16} height={16} />}
               </div>
-              {subtitleTracks.map(track => (
+              {activeSubtitleTracks.map(track => (
                 <div key={track.index} className={`sp-option${selectedSubtitle === track.index ? ' active' : ''}`} onClick={() => switchSubtitle(track.index)}>
                   <span>{track.name}</span>
                   {track.lang && <span className="sp-lang">{track.lang.toUpperCase()}</span>}

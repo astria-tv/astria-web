@@ -95,7 +95,11 @@ declare namespace chrome {
           onSuccess: () => void,
           onError: () => void,
         ): void;
-        seek(request: SeekRequest): void;
+        seek(
+          request: SeekRequest,
+          onSuccess?: () => void,
+          onError?: (err: unknown) => void,
+        ): void;
         stop(
           request: GenericMediaCommand | null,
           onSuccess: () => void,
@@ -107,6 +111,16 @@ declare namespace chrome {
       class GenericMediaCommand {}
       class SeekRequest {
         currentTime: number;
+      }
+      class EditTracksInfoRequest {
+        activeTrackIds: number[];
+      }
+      interface Track {
+        trackId: number;
+        type: string;
+        name: string;
+        language: string;
+        subtype: string;
       }
       const PlayerState: {
         IDLE: string;
@@ -141,6 +155,8 @@ export function useChromecast() {
   const [castDuration, setCastDuration] = useState(0);
   const [castPlaying, setCastPlaying] = useState(false);
   const [castError, setCastError] = useState<string | null>(null);
+  const [castSubtitleTracks, setCastSubtitleTracks] = useState<Array<{ trackId: number; name: string; language: string }>>([]);
+  const [castActiveSubtitleId, setCastActiveSubtitleId] = useState<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 
@@ -200,11 +216,30 @@ export function useChromecast() {
       const media = session?.getMediaSession();
       if (!media) return;
       setCastCurrentTime(media.getEstimatedTime?.() ?? media.currentTime ?? 0);
-      setCastDuration(media.duration ?? 0);
+      // media.duration can be 0 for HLS; fall back to media.media.duration
+      const mediaDuration = media.duration
+        || (media as unknown as { media?: { duration?: number } }).media?.duration
+        || 0;
+      setCastDuration(mediaDuration);
       setCastPlaying(
         media.playerState === chrome.cast.media.PlayerState.PLAYING ||
         media.playerState === chrome.cast.media.PlayerState.BUFFERING,
       );
+
+      // Continuously check for subtitle tracks from the receiver
+      const mediaInfo = (media as unknown as { media?: { tracks?: chrome.cast.media.Track[] } }).media;
+      const tracks = mediaInfo?.tracks ?? [];
+      const textTracks = tracks.filter(t => t.type === 'TEXT');
+      if (textTracks.length > 0) {
+        setCastSubtitleTracks(prev => {
+          if (prev.length === textTracks.length) return prev; // avoid re-renders
+          return textTracks.map(t => ({
+            trackId: t.trackId,
+            name: t.name || t.language || `Track ${t.trackId}`,
+            language: t.language ?? '',
+          }));
+        });
+      }
     }, 1000);
   }
 
@@ -293,10 +328,45 @@ export function useChromecast() {
   const castSeek = useCallback((time: number) => {
     const session = cast.framework.CastContext.getInstance().getCurrentSession();
     const media = session?.getMediaSession();
-    if (!media) return;
+    if (!media) {
+      console.warn('[Chromecast] No media session for seek');
+      return;
+    }
+    // Clamp to valid range
+    const mediaDuration = media.duration
+      || (media as unknown as { media?: { duration?: number } }).media?.duration
+      || 0;
+    const clampedTime = Math.max(0, mediaDuration > 0 ? Math.min(time, mediaDuration - 1) : time);
+    console.log('[Chromecast] Seeking to', clampedTime, 'duration:', mediaDuration);
     const request = new chrome.cast.media.SeekRequest();
-    request.currentTime = time;
-    media.seek(request);
+    request.currentTime = clampedTime;
+    media.seek(
+      request,
+      () => console.log('[Chromecast] Seek success'),
+      (err: unknown) => console.error('[Chromecast] Seek failed:', JSON.stringify(err)),
+    );
+  }, []);
+
+  const castSetSubtitleTrack = useCallback((trackId: number | null) => {
+    const session = cast.framework.CastContext.getInstance().getCurrentSession();
+    const media = session?.getMediaSession();
+    if (!media) return;
+    const request = new chrome.cast.media.EditTracksInfoRequest();
+    request.activeTrackIds = trackId != null ? [trackId] : [];
+    (media as unknown as {
+      editTracksInfo(
+        req: chrome.cast.media.EditTracksInfoRequest,
+        onSuccess: () => void,
+        onError: (err: unknown) => void,
+      ): void;
+    }).editTracksInfo(
+      request,
+      () => {
+        setCastActiveSubtitleId(trackId);
+        console.log('[Chromecast] Subtitle track set to', trackId);
+      },
+      (err: unknown) => console.error('[Chromecast] Failed to set subtitle track:', err),
+    );
   }, []);
 
   const castStop = useCallback(() => {
@@ -319,6 +389,8 @@ export function useChromecast() {
     castDuration,
     castPlaying,
     castError,
+    castSubtitleTracks,
+    castActiveSubtitleId,
     requestSession,
     endSession,
     loadMedia,
@@ -326,5 +398,6 @@ export function useChromecast() {
     castPause,
     castSeek,
     castStop,
+    castSetSubtitleTrack,
   };
 }
