@@ -354,7 +354,9 @@ export default function Player() {
       contentUrl: streamUrl,
       title: state.title ?? 'Now Playing',
       subtitle: state.subtitle,
-      posterUrl: state.posterUrl,
+      posterUrl: state.posterUrl
+        ? (state.posterUrl.startsWith('http') ? state.posterUrl : `${window.location.origin}${state.posterUrl}`)
+        : undefined,
       startTime: video ? video.currentTime : (state.startTime ?? 0),
     });
   }, [isCasting, ticket]);
