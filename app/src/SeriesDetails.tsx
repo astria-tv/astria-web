@@ -208,7 +208,7 @@ function episodeProgress(ep: Episode): number {
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const jwt = getJwt();
-  const res = await fetch('/olaris/m/query', {
+  const res = await fetch('/astria/m/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -29,7 +29,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch('/olaris/m/v1/user', {
+      const res = await fetch('/astria/m/v1/user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password, code }),

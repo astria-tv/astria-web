@@ -52,7 +52,7 @@ function tmdbImg(path: string, size = 'w500'): string {
 
 async function gqlFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
   const jwt = getJwt();
-  const res = await fetch('/olaris/m/query', {
+  const res = await fetch('/astria/m/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ const SESSIONS_COUNT_QUERY = `{ sessions { sessionID } }`;
 
 async function fetchSessionCount(): Promise<number> {
   const jwt = getJwt();
-  const res = await fetch('/olaris/s/query', {
+  const res = await fetch('/astria/s/query', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
