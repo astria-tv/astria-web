@@ -315,7 +315,9 @@ export default function SeriesDetails() {
         state: {
           title: ep.name,
           subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}`,
-          posterUrl: ep.stillPath ? tmdbImg(ep.stillPath, 'w342') : (series!.posterPath ? tmdbImg(series!.posterPath, 'w342') : undefined),
+          posterUrl: series!.seasons[activeSeason].posterPath
+            ? tmdbImg(series!.seasons[activeSeason].posterPath, 'w342')
+            : (series!.posterPath ? tmdbImg(series!.posterPath, 'w342') : undefined),
           mediaUuid: ep.uuid,
           episodeUuid: ep.uuid,
           startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),
@@ -334,7 +336,9 @@ export default function SeriesDetails() {
       state: {
         title: ep.name,
         subtitle: `${series!.name} · ${series!.seasons[activeSeason].name} · E${ep.episodeNumber}${res ? ` · ${res}` : ''}`,
-        posterUrl: ep.stillPath ? tmdbImg(ep.stillPath, 'w342') : (series!.posterPath ? tmdbImg(series!.posterPath, 'w342') : undefined),
+        posterUrl: series!.seasons[activeSeason].posterPath
+          ? tmdbImg(series!.seasons[activeSeason].posterPath, 'w342')
+          : (series!.posterPath ? tmdbImg(series!.posterPath, 'w342') : undefined),
         mediaUuid: ep.uuid,
         episodeUuid: ep.uuid,
         startTime: ep.playState?.finished ? 0 : (ep.playState?.playtime ?? 0),

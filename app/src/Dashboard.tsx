@@ -174,7 +174,7 @@ const DASHBOARD_QUERY = `{
       stillPath
       uuid
       playState { finished playtime }
-      season { seasonNumber series { name uuid } }
+      season { seasonNumber posterPath series { name uuid posterPath } }
       files { uuid totalDuration fileSize streams { codecName bitRate streamType resolution } }
     }
   }
@@ -409,7 +409,9 @@ export default function Dashboard() {
     const e = episode.episodeNumber;
     const subtitle = `${seriesName} · S${s} E${e}`;
 
-    const posterUrl = episode.stillPath ? tmdbImg(episode.stillPath, 'w342') : undefined;
+    const posterUrl = episode.season?.posterPath
+      ? tmdbImg(episode.season.posterPath, 'w342')
+      : (episode.season?.series?.posterPath ? tmdbImg(episode.season.series.posterPath, 'w342') : undefined);
     if (episode.files.length === 1) {
       playFile(episode.files[0].uuid, episode.name, subtitle, episode.uuid, startTime, episode.uuid, posterUrl);
     } else {

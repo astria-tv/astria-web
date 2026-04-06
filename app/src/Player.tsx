@@ -47,6 +47,8 @@ interface NextEpisodeInfo {
   fileUuid: string;
   episodeUuid: string;
   stillPath: string;
+  seasonPosterPath: string;
+  seriesPosterPath: string;
 }
 
 /* ─── GraphQL helper ─── */
@@ -104,7 +106,8 @@ const NEARBY_EPISODES = `query NearbyEpisodes($uuid: String!) {
       playState { finished playtime }
       season {
         name
-        series { name }
+        posterPath
+        series { name posterPath }
       }
     }
   }
@@ -445,7 +448,7 @@ export default function Player() {
         name: string; episodeNumber: number; uuid: string; stillPath: string;
         files: Array<{ uuid: string }>;
         playState: { finished: boolean; playtime: number } | null;
-        season: { name: string; series: { name: string } } | null;
+        season: { name: string; posterPath: string; series: { name: string; posterPath: string } } | null;
       }> } }>(NEARBY_EPISODES, { uuid: state.episodeUuid })
         .then(data => {
           const next = data.nearbyEpisodes.next[0];
@@ -458,6 +461,8 @@ export default function Player() {
               fileUuid: next.files[0].uuid,
               episodeUuid: next.uuid,
               stillPath: next.stillPath,
+              seasonPosterPath: next.season?.posterPath ?? '',
+              seriesPosterPath: next.season?.series?.posterPath ?? '',
             });
             setCountdown(10);
             setShowCountdown(true);
@@ -493,7 +498,9 @@ export default function Player() {
       state: {
         title: nextEpisode.name,
         subtitle: `${nextEpisode.seriesName} · ${nextEpisode.seasonName} · E${nextEpisode.episodeNumber}`,
-        posterUrl: nextEpisode.stillPath ? tmdbImg(nextEpisode.stillPath, 'w342') : undefined,
+        posterUrl: nextEpisode.seasonPosterPath
+            ? tmdbImg(nextEpisode.seasonPosterPath, 'w342')
+            : (nextEpisode.seriesPosterPath ? tmdbImg(nextEpisode.seriesPosterPath, 'w342') : undefined),
         mediaUuid: nextEpisode.episodeUuid,
         episodeUuid: nextEpisode.episodeUuid,
         startTime: 0,
