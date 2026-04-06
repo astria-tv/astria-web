@@ -181,6 +181,12 @@ export default function Player() {
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(0 as unknown as ReturnType<typeof setTimeout>);
   const saveTimerRef = useRef<ReturnType<typeof setInterval>>(0 as unknown as ReturnType<typeof setInterval>);
 
+  // Refs that track the latest cast values so callbacks/intervals never have stale closures
+  const castCurrentTimeRef = useRef(0);
+  const castDurationRef = useRef(0);
+  const castPlayingRef = useRef(false);
+  const isCastingRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ticket, setTicket] = useState<StreamingTicket | null>(null);
@@ -224,6 +230,12 @@ export default function Player() {
     castSubtitleTracks, castSetSubtitleTrack,
   } = useChromecast();
   const isCasting = castState === 'connected';
+
+  // Keep refs in sync so fire-and-forget saves always use fresh values
+  castCurrentTimeRef.current = castCurrentTime;
+  castDurationRef.current = castDuration;
+  castPlayingRef.current = castPlaying;
+  isCastingRef.current = isCasting;
 
   /* ─── Fetch streaming ticket ─── */
   useEffect(() => {
@@ -365,51 +377,65 @@ export default function Player() {
     });
   }, [isCasting, ticket]);
 
-  /* ─── Save play state periodically (local + cast) ─── */
-  useEffect(() => {
-    if (!state.mediaUuid) return;
-    const mediaUuid = state.mediaUuid;
+  /* ─── Reusable save helper (reads live refs, safe to call anywhere) ─── */
+  const mediaUuidRef = useRef(state.mediaUuid);
+  mediaUuidRef.current = state.mediaUuid;
 
-    saveTimerRef.current = setInterval(() => {
-      if (isCasting) {
-        // Save cast playback position
-        if (!castPlaying || !isFinite(castCurrentTime)) return;
-        const finished = castDuration > 0 && (castDuration - castCurrentTime) < 30;
-        gqlFetch(CREATE_PLAY_STATE, {
-          uuid: mediaUuid,
-          finished,
-          playtime: Math.floor(castCurrentTime),
-        }).catch(() => {});
-      } else {
-        const video = videoRef.current;
-        if (!video || video.paused || !isFinite(video.currentTime)) return;
-        const finished = video.duration > 0 && (video.duration - video.currentTime) < 30;
-        gqlFetch(CREATE_PLAY_STATE, {
-          uuid: mediaUuid,
-          finished,
-          playtime: Math.floor(video.currentTime),
-        }).catch(() => {});
-      }
-    }, 10000);
+  const savePlayState = useCallback((force = false) => {
+    const mediaUuid = mediaUuidRef.current;
+    if (!mediaUuid) return;
 
-    return () => clearInterval(saveTimerRef.current);
-  }, [state.mediaUuid, isCasting, castPlaying, castCurrentTime, castDuration]);
-
-  /* ─── Save state on unmount ─── */
-  useEffect(() => {
-    return () => {
-      const video = videoRef.current;
-      if (!video || !state.mediaUuid || !isFinite(video.currentTime)) return;
-      const finished = video.duration > 0 && (video.duration - video.currentTime) < 30;
-      // Fire and forget
+    if (isCastingRef.current) {
+      const t = castCurrentTimeRef.current;
+      const d = castDurationRef.current;
+      if (!force && !castPlayingRef.current) return;
+      if (!isFinite(t) || t <= 0) return;
+      const finished = d > 0 && (d - t) < 30;
       gqlFetch(CREATE_PLAY_STATE, {
-        uuid: state.mediaUuid,
+        uuid: mediaUuid,
+        finished,
+        playtime: Math.floor(t),
+      }).catch(() => {});
+    } else {
+      const video = videoRef.current;
+      if (!video || !isFinite(video.currentTime) || video.currentTime <= 0) return;
+      if (!force && video.paused) return;
+      const finished = video.duration > 0 && (video.duration - video.currentTime) < 30;
+      gqlFetch(CREATE_PLAY_STATE, {
+        uuid: mediaUuid,
         finished,
         playtime: Math.floor(video.currentTime),
       }).catch(() => {});
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }
   }, []);
+
+  /* ─── Save play state periodically (local + cast) ─── */
+  useEffect(() => {
+    if (!state.mediaUuid) return;
+    // The interval reads from refs, so it never goes stale — no need to
+    // depend on rapidly-changing cast values that would reset the timer.
+    saveTimerRef.current = setInterval(() => savePlayState(), 10000);
+    return () => clearInterval(saveTimerRef.current);
+  }, [state.mediaUuid, savePlayState]);
+
+  /* ─── Save state on unmount (handles both local & cast) ─── */
+  useEffect(() => {
+    return () => savePlayState(true);
+  }, [savePlayState]);
+
+  /* ─── Save state when tab is hidden or before unload ─── */
+  useEffect(() => {
+    const onVisChange = () => {
+      if (document.visibilityState === 'hidden') savePlayState(true);
+    };
+    const onBeforeUnload = () => savePlayState(true);
+    document.addEventListener('visibilitychange', onVisChange);
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisChange);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [savePlayState]);
 
   /* ─── Video event handlers ─── */
   const onTimeUpdate = useCallback(() => {
@@ -431,7 +457,11 @@ export default function Player() {
   }, []);
 
   const onPlay = useCallback(() => setPlaying(true), []);
-  const onPause = useCallback(() => setPlaying(false), []);
+  const onPause = useCallback(() => {
+    setPlaying(false);
+    // Immediately persist position when the user pauses
+    savePlayState(true);
+  }, [savePlayState]);
   const onEnded = useCallback(() => {
     setPlaying(false);
     // Save finished state
@@ -610,6 +640,7 @@ export default function Player() {
     if (isCasting) {
       if (castPlaying) {
         castPause();
+        savePlayState(true); // persist position on cast pause
         flashCenter('pause');
       } else {
         castPlay();
@@ -744,6 +775,8 @@ export default function Player() {
 
   function handleCastButton() {
     if (castState === 'connected') {
+      // Save the cast position before disconnecting
+      savePlayState(true);
       // Resume local playback from where cast left off
       const video = videoRef.current;
       if (video && isFinite(castCurrentTime) && castCurrentTime > 0) {
@@ -752,6 +785,8 @@ export default function Player() {
       endSession();
       if (video) video.play().catch(() => {});
     } else {
+      // Save local position before handing off to cast
+      savePlayState(true);
       requestSession();
     }
   }
