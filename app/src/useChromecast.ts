@@ -216,11 +216,30 @@ export function useChromecast() {
       const media = session?.getMediaSession();
       if (!media) return;
       setCastCurrentTime(media.getEstimatedTime?.() ?? media.currentTime ?? 0);
-      setCastDuration(media.duration ?? 0);
+      // media.duration can be 0 for HLS; fall back to media.media.duration
+      const mediaDuration = media.duration
+        || (media as unknown as { media?: { duration?: number } }).media?.duration
+        || 0;
+      setCastDuration(mediaDuration);
       setCastPlaying(
         media.playerState === chrome.cast.media.PlayerState.PLAYING ||
         media.playerState === chrome.cast.media.PlayerState.BUFFERING,
       );
+
+      // Continuously check for subtitle tracks from the receiver
+      const mediaInfo = (media as unknown as { media?: { tracks?: chrome.cast.media.Track[] } }).media;
+      const tracks = mediaInfo?.tracks ?? [];
+      const textTracks = tracks.filter(t => t.type === 'TEXT');
+      if (textTracks.length > 0) {
+        setCastSubtitleTracks(prev => {
+          if (prev.length === textTracks.length) return prev; // avoid re-renders
+          return textTracks.map(t => ({
+            trackId: t.trackId,
+            name: t.name || t.language || `Track ${t.trackId}`,
+            language: t.language ?? '',
+          }));
+        });
+      }
     }, 1000);
   }
 
@@ -285,8 +304,6 @@ export function useChromecast() {
       castSession.loadMedia(loadRequest).then(() => {
         startPolling();
         setCastPlaying(true);
-        // Fetch subtitle tracks after a short delay to let the receiver parse the manifest
-        setTimeout(() => fetchCastSubtitleTracks(), 2000);
       }).catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err ?? 'Cast media load failed');
         console.error('[Chromecast] Failed to load media:', message);
@@ -311,29 +328,24 @@ export function useChromecast() {
   const castSeek = useCallback((time: number) => {
     const session = cast.framework.CastContext.getInstance().getCurrentSession();
     const media = session?.getMediaSession();
-    if (!media) return;
+    if (!media) {
+      console.warn('[Chromecast] No media session for seek');
+      return;
+    }
+    // Clamp to valid range
+    const mediaDuration = media.duration
+      || (media as unknown as { media?: { duration?: number } }).media?.duration
+      || 0;
+    const clampedTime = Math.max(0, mediaDuration > 0 ? Math.min(time, mediaDuration - 1) : time);
+    console.log('[Chromecast] Seeking to', clampedTime, 'duration:', mediaDuration);
     const request = new chrome.cast.media.SeekRequest();
-    request.currentTime = time;
+    request.currentTime = clampedTime;
     media.seek(
       request,
       () => console.log('[Chromecast] Seek success'),
-      (err: unknown) => console.error('[Chromecast] Seek failed:', err),
+      (err: unknown) => console.error('[Chromecast] Seek failed:', JSON.stringify(err)),
     );
   }, []);
-
-  function fetchCastSubtitleTracks() {
-    const session = cast.framework.CastContext.getInstance().getCurrentSession();
-    const media = session?.getMediaSession();
-    if (!media) return;
-    const mediaInfo = (media as unknown as { media?: { tracks?: chrome.cast.media.Track[] } }).media;
-    const tracks = mediaInfo?.tracks ?? [];
-    const textTracks = tracks.filter(t => t.type === 'TEXT');
-    setCastSubtitleTracks(textTracks.map(t => ({
-      trackId: t.trackId,
-      name: t.name || t.language || `Track ${t.trackId}`,
-      language: t.language ?? '',
-    })));
-  }
 
   const castSetSubtitleTrack = useCallback((trackId: number | null) => {
     const session = cast.framework.CastContext.getInstance().getCurrentSession();
