@@ -7,8 +7,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/olaris/m': 'http://localhost:8080',
-      '/olaris/s': 'http://localhost:8080'
+      '/astria/m': 'http://localhost:8080',
+      '/astria/s': 'http://localhost:8080'
     },
   },
 })
